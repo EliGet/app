@@ -17,6 +17,7 @@ const authRoutes = require('./routes/auth');
 const postRoutes = require('./routes/post');
 const chatRoutes = require('./routes/chat');
 const groupRoutes = require('./routes/group');
+const wapRoutes = require('./routes/wap');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -37,6 +38,7 @@ app.use('/auth', authRoutes);
 app.use('/post', isAuthenticated, postRoutes);
 app.use('/chat', isAuthenticated, chatRoutes);
 app.use('/group', isAuthenticated, groupRoutes);
+app.use('/wap', wapRoutes);
 
 // ===== ICONS =====
 const icons = {
@@ -381,8 +383,21 @@ function getDeleteModal() {
     `;
 }
 
+function isButtonPhone(req) {
+    const ua = (req.headers['user-agent'] || '').toLowerCase();
+    if (ua.includes('jwap') || ua.includes('obigo') || ua.includes('maui') ||
+        ua.includes('openwave') || ua.includes('up.browser') || ua.includes('wap')) {
+        return true;
+    }
+    return false;
+}
+
 // ===== HOME PAGE (FEED) =====
 app.get('/', async (req, res) => {
+    // Auto-detect button phones and redirect to WAP UI
+    if (isButtonPhone(req)) {
+        return res.redirect('/wap');
+    }
     if (req.session.user) {
         const posts = await Post.find().sort({ created_at: -1 }).limit(50);
         let html = '<html><head><link rel="stylesheet" href="/style.css"></head><body><div class="container">';
