@@ -348,3 +348,141 @@ header { display: flex; justify-content: space-between; align-items: center; bor
 .chat-avatar-wrapper { position: relative; margin-right: 15px; flex-shrink: 0; }
 .chat-avatar-wrapper .chat-avatar { margin-right: 0; }
 .unread-dot { position: absolute; top: 0; right: 0; width: 12px; height: 12px; background: #38a169; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+
+/* ===== Avatar Categories ===== */
+.avatar-category { margin-bottom: 25px; }
+.avatar-category-title { font-size: 0.95rem; font-weight: 700; color: #2d3748; margin-bottom: 12px; padding-left: 10px; border-left: 3px solid #3182ce; }
+
+.avatar-grid-8 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.avatar-grid-8 .avatar-option { background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 6px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; aspect-ratio: 1/1; }
+.avatar-grid-8 .avatar-option:hover { border-color: #90cdf4; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(49,130,206,0.15); }
+.avatar-grid-8 .avatar-option.selected { border-color: #3182ce; background: #ebf8ff; box-shadow: 0 0 0 3px rgba(49,130,206,0.2); }
+.avatar-grid-8 .avatar-option img { width: 100%; height: 100%; object-fit: contain; }
+
+/* ===== Post Image Grid (Landscape) ===== */
+.image-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+.image-option { background: #fff; border: 2px solid #e2e8f0; border-radius: 10px; padding: 4px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1/1; overflow: hidden; }
+.image-option:hover { border-color: #90cdf4; transform: translateY(-1px); }
+.image-option.selected { border-color: #3182ce; background: #ebf8ff; box-shadow: 0 0 0 2px rgba(49,130,206,0.2); }
+.image-option img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+.image-option span { font-size: 0.7rem; font-weight: 600; color: #718096; }
+.image-option input[type="radio"] { display: none; }
+
+/* ===== Post Image on Feed ===== */
+.post-image { margin-top: 12px; padding-left: 50px; }
+.post-image img { width: 100%; max-width: 260px; aspect-ratio: 2/1; object-fit: cover; border-radius: 12px; border: 1px solid #edf2f7; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+
+/* ===== Post Image Grid (Lucide Icons) ===== */
+.image-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+.image-option { background: #fff; border: 2px solid #e2e8f0; border-radius: 10px; padding: 8px 4px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; overflow: hidden; min-height: 70px; }
+.image-option:hover { border-color: #90cdf4; transform: translateY(-1px); }
+.image-option.selected { border-color: #3182ce; background: #ebf8ff; box-shadow: 0 0 0 2px rgba(49,130,206,0.2); }
+.image-option input[type="radio"] { display: none; }
+.image-option.none-option { font-size: 0.7rem; font-weight: 600; color: #718096; justify-content: center; }
+.image-option span { font-size: 0.65rem; font-weight: 600; color: #4a5568; text-align: center; line-height: 1.1; }
+
+.image-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #3182ce; }
+.image-icon svg { width: 100%; height: 100%; stroke: #3182ce; }
+
+/* ===== Post Image Icon (on Feed) ===== */
+.post-image-icon { margin-top: 12px; padding-left: 50px; }
+.post-image-icon svg { width: 60px; height: 60px; color: #3182ce; opacity: 0.7; }
+
+/* ===== Post Image Scenes (Handmade SVG) ===== */
+.image-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+.image-option { background: #fff; border: 2px solid #e2e8f0; border-radius: 10px; padding: 4px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; overflow: hidden; min-height: 78px; }
+.image-option:hover { border-color: #90cdf4; transform: translateY(-1px); }
+.image-option.selected { border-color: #3182ce; background: #ebf8ff; box-shadow: 0 0 0 2px rgba(49,130,206,0.2); }
+.image-option input[type="radio"] { display: none; }
+.image-option.none-option { font-size: 0.75rem; font-weight: 600; color: #718096; justify-content: center; }
+.image-option span { font-size: 0.6rem; font-weight: 600; color: #4a5568; text-align: center; line-height: 1; }
+
+.image-icon { width: 52px; height: 52px; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.image-icon svg { width: 100%; height: 100%; }
+
+/* ===== Post Image Scene (on Feed) ===== */
+.post-image-scene { margin-top: 12px; padding-left: 50px; }
+.post-image-scene svg { width: 100%; max-width: 260px; aspect-ratio: 1/1; border-radius: 12px; border: 1px solid #edf2f7; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+
+/* ===== Attach SVG Button ===== */
+.attach-svg-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 20px; background: #ebf8ff; color: #3182ce; border: 2px dashed #90cdf4; border-radius: 12px; text-decoration: none; font-size: 0.95rem; font-weight: 600; transition: all 0.15s; margin-top: 8px; }
+.attach-svg-btn:hover { background: #bee3f8; border-color: #3182ce; }
+.attach-svg-btn svg { width: 20px; height: 20px; fill: #3182ce; }
+
+/* ===== Attached Preview ===== */
+.attached-preview { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 8px; }
+.attached-preview-icon { width: 56px; height: 56px; border-radius: 10px; overflow: hidden; flex-shrink: 0; border: 1px solid #e2e8f0; }
+.attached-preview-icon svg { width: 100%; height: 100%; }
+.attached-preview-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.attached-preview-label { font-size: 0.95rem; font-weight: 600; color: #2d3748; }
+.attached-preview-remove { font-size: 0.8rem; color: #e53e3e; text-decoration: none; font-weight: 500; }
+.attached-preview-remove:hover { text-decoration: underline; }
+
+/* ===== SVG Library Page ===== */
+.library-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.library-item { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; background: #fff; border: 2px solid #e2e8f0; border-radius: 14px; text-decoration: none; transition: all 0.15s; }
+.library-item:hover { border-color: #90cdf4; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(49,130,206,0.12); }
+.library-item.library-selected { border-color: #3182ce; background: #ebf8ff; box-shadow: 0 0 0 3px rgba(49,130,206,0.18); }
+.library-icon { width: 100%; aspect-ratio: 1/1; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.library-icon svg { width: 100%; height: 100%; }
+.library-icon.none-icon { background: #f7fafc; color: #a0aec0; }
+.library-icon.none-icon svg { width: 40%; height: 40%; fill: #a0aec0; }
+.library-label { font-size: 0.75rem; font-weight: 600; color: #4a5568; text-align: center; line-height: 1; }
+
+/* ===== Post Image on Feed ===== */
+.post-image-scene { margin-top: 12px; padding-left: 50px; }
+.post-image-scene svg { width: 100%; max-width: 260px; aspect-ratio: 1/1; border-radius: 12px; border: 1px solid #edf2f7; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+
+/* ===== Mood Grid (9 items) ===== */
+.mood-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+.mood-option { background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 10px 4px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.mood-option:hover { border-color: #90cdf4; }
+.mood-option.selected { border-color: #3182ce; background: #ebf8ff; box-shadow: 0 0 0 2px rgba(49,130,206,0.2); }
+.mood-option input[type="radio"] { display: none; }
+.mood-option svg { width: 22px; height: 22px; fill: #3182ce; }
+.mood-option span { font-size: 0.7rem; font-weight: 600; color: #4a5568; text-align: center; line-height: 1; }
+
+/* ===== Avatar Library Page ===== */
+.avatar-library-category { margin-bottom: 25px; }
+.avatar-library-title { font-size: 1rem; font-weight: 700; color: #2d3748; margin-bottom: 12px; padding-left: 12px; border-left: 3px solid #3182ce; }
+
+.avatar-library-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.avatar-library-item { display: flex; align-items: center; justify-content: center; background: #fff; border: 2px solid #e2e8f0; border-radius: 50%; overflow: hidden; aspect-ratio: 1/1; text-decoration: none; transition: all 0.15s; padding: 6px; }
+.avatar-library-item:hover { border-color: #90cdf4; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(49,130,206,0.15); }
+.avatar-library-item.library-selected { border-color: #3182ce; box-shadow: 0 0 0 3px rgba(49,130,206,0.25); background: #ebf8ff; }
+.avatar-library-item img { width: 100%; height: 100%; object-fit: contain; }
+
+/* ===== Avatar Save Bar (Fixed Bottom) ===== */
+.avatar-save-bar { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; padding: 12px 20px; background: #ffffff; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 12px rgba(0,0,0,0.06); z-index: 950; box-sizing: border-box; }
+
+.avatar-cancel-btn { flex: 1; padding: 14px; background: #edf2f7; color: #4a5568; text-decoration: none; text-align: center; border-radius: 10px; font-size: 0.95rem; font-weight: 600; transition: background 0.2s; }
+.avatar-cancel-btn:hover { background: #e2e8f0; }
+
+.avatar-save-btn { flex: 2; padding: 14px; background: #3182ce; color: #fff; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.avatar-save-btn:hover { background: #2b6cb0; }
+
+/* ===== Avatar Library Page ===== */
+.avatar-library-category { margin-bottom: 25px; }
+.avatar-library-title { font-size: 1rem; font-weight: 700; color: #2d3748; margin-bottom: 12px; padding-left: 12px; border-left: 3px solid #3182ce; }
+
+.avatar-library-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.avatar-library-item { display: flex; align-items: center; justify-content: center; background: #fff; border: 2px solid #e2e8f0; border-radius: 50%; overflow: hidden; aspect-ratio: 1/1; text-decoration: none; transition: all 0.15s; padding: 6px; }
+.avatar-library-item:hover { border-color: #90cdf4; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(49,130,206,0.15); }
+.avatar-library-item.library-selected { border-color: #3182ce; box-shadow: 0 0 0 3px rgba(49,130,206,0.25); background: #ebf8ff; }
+.avatar-library-item img { width: 100%; height: 100%; object-fit: contain; }
+
+/* ===== Avatar Save Bar (Fixed Bottom) ===== */
+.avatar-save-bar { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; padding: 12px 20px; background: #ffffff; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 12px rgba(0,0,0,0.06); z-index: 950; box-sizing: border-box; }
+
+.avatar-cancel-btn { flex: 1; padding: 14px; background: #edf2f7; color: #4a5568; text-decoration: none; text-align: center; border-radius: 10px; font-size: 0.95rem; font-weight: 600; transition: background 0.2s; }
+.avatar-cancel-btn:hover { background: #e2e8f0; }
+
+.avatar-save-btn { flex: 2; padding: 14px; background: #3182ce; color: #fff; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.avatar-save-btn:hover { background: #2b6cb0; }
+
+/* ===== Avatar Library (All together) ===== */
+.avatar-library-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding-bottom: 100px; }
+.avatar-library-item { display: flex; align-items: center; justify-content: center; background: #fff; border: 2px solid #e2e8f0; border-radius: 50%; overflow: hidden; aspect-ratio: 1/1; text-decoration: none; transition: all 0.15s; padding: 4px; }
+.avatar-library-item:hover { border-color: #90cdf4; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(49,130,206,0.15); }
+.avatar-library-item.library-selected { border-color: #3182ce; box-shadow: 0 0 0 3px rgba(49,130,206,0.25); background: #ebf8ff; }
+.avatar-library-item img { width: 100%; height: 100%; object-fit: contain; }
