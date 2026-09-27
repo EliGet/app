@@ -31,9 +31,25 @@ function wapPage(title, body, options = {}) {
     const autoRefresh = options.refresh
         ? `<meta http-equiv="refresh" content="${options.refresh}"/>`
         : '';
-    const backLink = options.back
-        ? `<p><small><a href="${options.back}">Back</a> | <a href="/wap">Home</a></small></p>`
+    const user = options.user || '';
+    const userParam = user ? '?u=' + encodeURIComponent(user) : '';
+    const backUrl = options.back ? (options.back + userParam) : '';
+    const backLink = backUrl
+        ? `<p><small><a href="${backUrl}">Back</a> | <a href="/wap${userParam}">Home</a></small></p>`
         : '';
+    // Auto-append ?u= to all /wap links in body if user is set
+    let processedBody = body;
+    if (user) {
+        // Append ?u= to href="/wap/..." links that don't have ?u=
+        processedBody = body.replace(/href="(\/wap[^"]*?)"/g, (match, url) => {
+            if (url.includes('?')) {
+                return `href="${url}&u=${encodeURIComponent(user)}"`;
+            } else {
+                return `href="${url}?u=${encodeURIComponent(user)}"`;
+            }
+        });
+    }
+
     return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -44,7 +60,7 @@ ${autoRefresh}
 </head>
 <body>
 <h3>${escapeXml(title)}</h3>
-${body}
+${processedBody}
 <hr/>
 ${backLink}
 <p><small>EliGet - Text-only network</small></p>
@@ -85,20 +101,20 @@ router.get('/', async (req, res) => {
         `;
     }
 
-    res.send(wapPage('EliGet', menu));
+    res.send(wapPage('EliGet', menu, { user: req.session.user }));
 });
 
 // ===== LOGIN =====
 router.get('/login', (req, res) => {
     const body = `
-        <form action="/wap/login" method="POST">
+        <form action="/wap/login${userParam}" method="POST">
             <p>Username:<br/><input type="text" name="username" size="12" maxlength="20"/></p>
             <p>Password:<br/><input type="password" name="password" size="12" maxlength="30"/></p>
             <p><input type="submit" value="Login"/></p>
         </form>
         <p><a href="/wap/signup">Signup</a></p>
     `;
-    res.send(wapPage('Login', body, { back: '/wap' }));
+    res.send(wapPage('Login', body, { back: '/wap' , user: req.session.user }));
 });
 
 router.post('/login', async (req, res) => {
@@ -125,7 +141,7 @@ router.post('/login', async (req, res) => {
 // ===== SIGNUP =====
 router.get('/signup', (req, res) => {
     const body = `
-        <form action="/wap/signup" method="POST">
+        <form action="/wap/signup${userParam}" method="POST">
             <p>Full Name:<br/><input type="text" name="full_name" size="15" maxlength="30"/></p>
             <p>Username:<br/><input type="text" name="username" size="12" maxlength="20"/></p>
             <p>Password:<br/><input type="password" name="password" size="12" maxlength="30"/></p>
@@ -133,7 +149,7 @@ router.get('/signup', (req, res) => {
         </form>
         <p><a href="/wap/login">Already have account? Login</a></p>
     `;
-    res.send(wapPage('Create Account', body, { back: '/wap' }));
+    res.send(wapPage('Create Account', body, { back: '/wap' , user: req.session.user }));
 });
 
 router.post('/signup', async (req, res) => {
@@ -227,7 +243,7 @@ router.get('/feed', async (req, res) => {
             }
         }
 
-        res.send(wapPage('Feed', html, { back: '/wap' }));
+        res.send(wapPage('Feed', html, { back: '/wap' , user: req.session.user }));
     } catch (err) {
         res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap">Home</a></p>`));
     }
@@ -250,7 +266,7 @@ router.get('/post/:id', async (req, res) => {
             <p>${escapeXml(post.body)}</p>
         `;
 
-        res.send(wapPage('Post', html, { back: '/wap/feed' }));
+        res.send(wapPage('Post', html, { back: '/wap/feed' , user: req.session.user }));
     } catch (err) {
         res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap/feed">Back to Feed</a></p>`));
     }
@@ -260,13 +276,13 @@ router.get('/post/:id', async (req, res) => {
 router.get('/post', (req, res) => {
     if (!req.session.user) return res.redirect('/wap/login');
     const body = `
-        <form action="/wap/post" method="POST">
+        <form action="/wap/post${userParam}" method="POST">
             <p>Your thoughts (max 300):<br/>
             <textarea name="body" rows="5" cols="20" maxlength="300"></textarea></p>
             <p><input type="submit" value="Post"/></p>
         </form>
     `;
-    res.send(wapPage('New Post', body, { back: '/wap' }));
+    res.send(wapPage('New Post', body, { back: '/wap' , user: req.session.user }));
 });
 
 router.post('/post', async (req, res) => {
@@ -326,7 +342,7 @@ router.get('/chat', async (req, res) => {
 
         html += `<p><a href="/wap/add-friends">Add Friends</a></p>`;
 
-        res.send(wapPage('Chats', html, { back: '/wap' }));
+        res.send(wapPage('Chats', html, { back: '/wap' , user: req.session.user }));
     } catch (err) {
         console.error('Chat list error:', err);
         res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap">Home</a></p>`));
@@ -370,7 +386,7 @@ router.get('/add-friends', async (req, res) => {
         }
 
         html += `<p><a href="/wap/chat">Back to Chats</a></p>`;
-        res.send(wapPage('Add Friends', html, { back: '/wap/chat' }));
+        res.send(wapPage('Add Friends', html, { back: '/wap/chat' , user: req.session.user }));
     } catch (err) {
         console.error('Add friends error:', err);
         res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap">Home</a></p>`));
@@ -419,7 +435,7 @@ router.get('/notifications', async (req, res) => {
             }
         }
 
-        res.send(wapPage('Notifications', html, { back: '/wap' }));
+        res.send(wapPage('Notifications', html, { back: '/wap' , user: req.session.user }));
     } catch (err) {
         res.send(wapPage('Error', '<p>Error loading notifications.</p><p><a href="/wap">Home</a></p>'));
     }
@@ -564,7 +580,7 @@ router.get('/profile', async (req, res) => {
             <p><a href="/wap/logout">Logout</a></p>
         `;
 
-        res.send(wapPage('My Profile', html, { back: '/wap' }));
+        res.send(wapPage('My Profile', html, { back: '/wap' , user: req.session.user }));
     } catch (err) {
         res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap">Home</a></p>`));
     }

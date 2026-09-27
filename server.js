@@ -26,8 +26,32 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
     secret: 'eliget-secret-key-123',
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax'
+    }
 }));
+
+// ===== WAP SESSION FALLBACK =====
+// If cookie doesn't work (jWAP), read user from URL query
+app.use((req, res, next) => {
+    if (!req.session.user && req.query.u) {
+        const usersFile = null; // no file DB anymore, use MongoDB
+        // Verify user exists
+        const User = require('./models/User');
+        User.findOne({ username: req.query.u }).then(user => {
+            if (user) {
+                req.session.user = user.username;
+            }
+            next();
+        }).catch(() => next());
+    } else {
+        next();
+    }
+});
 
 function isAuthenticated(req, res, next) {
     if (req.session.user) return next();
