@@ -171,11 +171,20 @@ router.get('/feed', async (req, res) => {
         if (posts.length === 0) {
             html = '<p>No posts yet.</p>';
         } else {
-            posts.forEach((p, i) => {
+            for (let i = 0; i < posts.length; i++) {
+                const p = posts[i];
+                const author = await User.findOne({ username: p.author });
+                const displayName = author ? (author.full_name || author.username) : p.author;
+
                 let body = p.body;
-                if (body.length > 100) body = body.substring(0, 100) + '...';
-                html += `<p>${i + 1}. <b>${p.author}</b><br/>${body}</p>`;
-            });
+                let readMore = '';
+                if (body.length > 100) {
+                    body = body.substring(0, 100) + '...';
+                    readMore = ` <a href="/wap/post/${p._id}">Read more</a>`;
+                }
+
+                html += `<p>${i + 1}. <b>${displayName}</b><br/>${body}${readMore}</p>`;
+            }
         }
 
         html += `<p><a href="/wap">Home</a></p>`;
@@ -183,6 +192,31 @@ router.get('/feed', async (req, res) => {
         res.send(wapPage('Feed', html));
     } catch (err) {
         res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap">Home</a></p>`));
+    }
+});
+
+// ===== SINGLE POST VIEW (Read More) =====
+router.get('/post/:id', async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post) {
+            return res.send(wapPage('Error', `<p>Post not found.</p><p><a href="/wap/feed">Back to Feed</a></p>`));
+        }
+
+        const author = await User.findOne({ username: post.author });
+        const displayName = author ? (author.full_name || author.username) : post.author;
+
+        const html = `
+            <p><b>${displayName}</b></p>
+            <hr/>
+            <p>${post.body}</p>
+            <hr/>
+            <p><a href="/wap/feed">Back to Feed</a></p>
+        `;
+
+        res.send(wapPage('Post', html));
+    } catch (err) {
+        res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap/feed">Back to Feed</a></p>`));
     }
 });
 
