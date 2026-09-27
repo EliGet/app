@@ -1,12 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
-
-const postFile = path.join(__dirname, '../data/post.json');
-
-function getPosts() { return JSON.parse(fs.readFileSync(postFile, 'utf-8')); }
-function savePosts(data) { fs.writeFileSync(postFile, JSON.stringify(data, null, 2)); }
+const Post = require('../models/Post');
 
 const moodIcons = {
     happy: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>`,
@@ -31,7 +25,7 @@ function getBottomNav(active) {
     return `<div class="bottom-nav"><a href="/" class="${active === 'home' ? 'active' : ''}">${icons.home}<span>Home</span></a><a href="/post/create" class="${active === 'post' ? 'active' : ''}">${icons.plus}<span>Post</span></a><a href="/chat" class="${active === 'chat' ? 'active' : ''}">${icons.chat}<span>Chat</span></a><a href="/profile" class="${active === 'profile' ? 'active' : ''}">${icons.profile}<span>Profile</span></a></div>`;
 }
 
-// New Post Page
+// New Post Page (GET)
 router.get('/create', (req, res) => {
     const moods = [
         { key: 'happy', label: 'Happy' },
@@ -75,104 +69,113 @@ router.get('/create', (req, res) => {
     `);
 });
 
-// Create Post
-router.post('/create', (req, res) => {
-    const { body, mood } = req.body;
-    const data = getPosts();
-    data.posts.push({
-        id: 'p_' + Date.now(),
-        author: req.session.user,
-        mood: mood || 'happy',
-        body: body,
-        created_at: new Date().toISOString()
-    });
-    savePosts(data);
-    res.redirect('/');
+// Create Post (POST)
+router.post('/create', async (req, res) => {
+    try {
+        const { body, mood } = req.body;
+        const newPost = new Post({
+            author: req.session.user,
+            body: body,
+            mood: mood || 'happy'
+        });
+        await newPost.save();
+        res.redirect('/');
+    } catch (error) {
+        console.error('Post create error:', error);
+        res.send('Something went wrong. <a href="/post/create">Try again</a>');
+    }
 });
 
 // Edit Post Page (GET)
-router.get('/edit/:id', (req, res) => {
-    const me = req.session.user;
-    const postId = req.params.id;
-    const data = getPosts();
-    const post = data.posts.find(p => p.id === postId);
+router.get('/edit/:id', async (req, res) => {
+    try {
+        const me = req.session.user;
+        const post = await Post.findById(req.params.id);
 
-    if (!post) return res.redirect('/');
-    if (post.author !== me) return res.redirect('/'); // Only owner can edit
+        if (!post) return res.redirect('/');
+        if (post.author !== me) return res.redirect('/');
 
-    const moods = [
-        { key: 'happy', label: 'Happy' },
-        { key: 'romantic', label: 'Romantic' },
-        { key: 'nature', label: 'Nature' },
-        { key: 'thoughtful', label: 'Thoughtful' },
-        { key: 'excited', label: 'Excited' },
-        { key: 'calm', label: 'Calm' },
-        { key: 'music', label: 'Music' },
-        { key: 'book', label: 'Book' }
-    ];
+        const moods = [
+            { key: 'happy', label: 'Happy' },
+            { key: 'romantic', label: 'Romantic' },
+            { key: 'nature', label: 'Nature' },
+            { key: 'thoughtful', label: 'Thoughtful' },
+            { key: 'excited', label: 'Excited' },
+            { key: 'calm', label: 'Calm' },
+            { key: 'music', label: 'Music' },
+            { key: 'book', label: 'Book' }
+        ];
 
-    let moodOptionsHtml = '';
-    moods.forEach((m) => {
-        const isChecked = post.mood === m.key ? 'checked' : '';
-        const isSelected = post.mood === m.key ? 'selected' : '';
-        moodOptionsHtml += `<label class="mood-option ${isSelected}" onclick="selectMood(this)"><input type="radio" name="mood" value="${m.key}" ${isChecked}>${moodIcons[m.key]}<span>${m.label}</span></label>`;
-    });
+        let moodOptionsHtml = '';
+        moods.forEach((m) => {
+            const isChecked = post.mood === m.key ? 'checked' : '';
+            const isSelected = post.mood === m.key ? 'selected' : '';
+            moodOptionsHtml += `<label class="mood-option ${isSelected}" onclick="selectMood(this)"><input type="radio" name="mood" value="${m.key}" ${isChecked}>${moodIcons[m.key]}<span>${m.label}</span></label>`;
+        });
 
-    res.send(`
-        <html><head><link rel="stylesheet" href="/style.css"></head><body>
-        <div class="container">
-            <header><span class="profile-title">Edit Post</span><a href="/" class="header-icon" title="Back">${icons.back}</a></header>
-            <div class="form-card">
-                <form action="/post/edit/${post.id}" method="POST">
-                    <div class="form-group">
-                        <label>Your thoughts (Max 300 characters)</label>
-                        <textarea name="body" rows="8" maxlength="300" required>${post.body}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Choose a Mood</label>
-                        <div class="mood-grid">${moodOptionsHtml}</div>
-                    </div>
-                    <button type="submit" class="btn-full">Save Changes</button>
-                </form>
+        res.send(`
+            <html><head><link rel="stylesheet" href="/style.css"></head><body>
+            <div class="container">
+                <header><span class="profile-title">Edit Post</span><a href="/" class="header-icon" title="Back">${icons.back}</a></header>
+                <div class="form-card">
+                    <form action="/post/edit/${post._id}" method="POST">
+                        <div class="form-group">
+                            <label>Your thoughts (Max 300 characters)</label>
+                            <textarea name="body" rows="8" maxlength="300" required>${post.body}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Choose a Mood</label>
+                            <div class="mood-grid">${moodOptionsHtml}</div>
+                        </div>
+                        <button type="submit" class="btn-full">Save Changes</button>
+                    </form>
+                </div>
             </div>
-        </div>
-        ${getBottomNav('post')}
-        <script>function selectMood(el){document.querySelectorAll('.mood-option').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');}</script>
-        </body></html>
-    `);
+            ${getBottomNav('post')}
+            <script>function selectMood(el){document.querySelectorAll('.mood-option').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');}</script>
+            </body></html>
+        `);
+    } catch (error) {
+        console.error('Edit page error:', error);
+        res.redirect('/');
+    }
 });
 
 // Update Post (POST)
-router.post('/edit/:id', (req, res) => {
-    const me = req.session.user;
-    const postId = req.params.id;
-    const { body, mood } = req.body;
-    const data = getPosts();
-    const post = data.posts.find(p => p.id === postId);
+router.post('/edit/:id', async (req, res) => {
+    try {
+        const me = req.session.user;
+        const post = await Post.findById(req.params.id);
 
-    if (!post || post.author !== me) return res.redirect('/');
+        if (!post || post.author !== me) return res.redirect('/');
 
-    post.body = body;
-    post.mood = mood || 'happy';
-    post.edited = true;
-    post.edited_at = new Date().toISOString();
-    savePosts(data);
+        post.body = req.body.body;
+        post.mood = req.body.mood || 'happy';
+        post.edited = true;
+        post.edited_at = new Date();
+        await post.save();
 
-    res.redirect('/');
+        res.redirect('/');
+    } catch (error) {
+        console.error('Edit error:', error);
+        res.redirect('/');
+    }
 });
 
 // Delete Post (POST)
-router.post('/delete/:id', (req, res) => {
-    const me = req.session.user;
-    const postId = req.params.id;
-    const data = getPosts();
-    const post = data.posts.find(p => p.id === postId);
+router.post('/delete/:id', async (req, res) => {
+    try {
+        const me = req.session.user;
+        const post = await Post.findById(req.params.id);
 
-    if (!post || post.author !== me) return res.redirect('/');
+        if (!post || post.author !== me) return res.redirect('/');
 
-    data.posts = data.posts.filter(p => p.id !== postId);
-    savePosts(data);
-    res.redirect('/');
+        await Post.deleteOne({ _id: req.params.id });
+        res.redirect('/');
+    } catch (error) {
+        console.error('Delete error:', error);
+        res.redirect('/');
+    }
 });
 
 module.exports = router;

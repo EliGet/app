@@ -20,7 +20,9 @@
   "homepage": "https://github.com/EliGet/app#readme",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.4",
     "express": "^5.2.1",
-    "express-session": "^1.19.0"
+    "express-session": "^1.19.0",
+    "mongoose": "^9.10.2"
   }
 }

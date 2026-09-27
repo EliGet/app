@@ -1,13 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
 const bcrypt = require('bcryptjs');
-
-const usersFile = path.join(__dirname, '../data/users.json');
-
-function getUsers() { return JSON.parse(fs.readFileSync(usersFile, 'utf-8')); }
-function saveUsers(data) { fs.writeFileSync(usersFile, JSON.stringify(data, null, 2)); }
+const User = require('../models/User');
 
 function generateRecoveryCodes() {
     const codes = [];
@@ -26,9 +20,10 @@ function generateRecoveryCodes() {
 const icons = {
     userAdd: `<svg viewBox="0 0 24 24" style="width:40px;height:40px;fill:#3182ce;margin-bottom:10px;"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`,
     check: `<svg viewBox="0 0 24 24" style="width:40px;height:40px;fill:#38a169;margin-bottom:10px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`,
-    back: `<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>`
+    back: `<svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>`
 };
 
+// Signup Page (GET)
 router.get('/signup', (req, res) => {
     res.send(`
         <html><head><link rel="stylesheet" href="/style.css"></head><body>
@@ -37,7 +32,6 @@ router.get('/signup', (req, res) => {
                 ${icons.userAdd}
                 <h2>Create Account</h2>
                 <p class="subtitle">No email required. Just a full name, username, and password.</p>
-                
                 <form action="/auth/signup" method="POST">
                     <div class="form-group">
                         <label>Full Name</label>
@@ -53,7 +47,6 @@ router.get('/signup', (req, res) => {
                     </div>
                     <button type="submit" class="btn-full">Sign Up</button>
                 </form>
-                
                 <div class="auth-links">
                     Already have an account? <a href="/auth/login">Login</a>
                 </div>
@@ -64,56 +57,62 @@ router.get('/signup', (req, res) => {
     `);
 });
 
+// Signup POST
 router.post('/signup', async (req, res) => {
-    const { full_name, username, password } = req.body;
-    const data = getUsers();
+    try {
+        const { full_name, username, password } = req.body;
 
-    if (username.includes(' ')) {
-        return res.send('Username cannot contain spaces. <a href="/auth/signup">Try again</a>');
-    }
+        if (username.includes(' ')) {
+            return res.send('Username cannot contain spaces. <a href="/auth/signup">Try again</a>');
+        }
 
-    if (data.users.find(u => u.username === username)) {
-        return res.send('Sorry, this username is already taken. <a href="/auth/signup">Try again</a>');
-    }
+        // Check if username already exists
+        const existingUser = await User.findOne({ username: username });
+        if (existingUser) {
+            return res.send('Sorry, this username is already taken. <a href="/auth/signup">Try again</a>');
+        }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const rawCodes = generateRecoveryCodes();
-    const hashedCodes = rawCodes.map(code => ({ hash: bcrypt.hashSync(code, 10), used: false }));
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const rawCodes = generateRecoveryCodes();
+        const hashedCodes = rawCodes.map(code => ({
+            hash: bcrypt.hashSync(code, 10),
+            used: false
+        }));
 
-    data.users.push({
-        id: 'u_' + Date.now(),
-        full_name: full_name,
-        username: username,
-        password_hash: hashedPassword,
-        recovery_codes: hashedCodes,
-        created_at: new Date().toISOString(),
-        status: 'active'
-    });
-    saveUsers(data);
+        const newUser = new User({
+            full_name: full_name,
+            username: username,
+            password_hash: hashedPassword,
+            recovery_codes: hashedCodes
+        });
 
-    res.send(`
-        <html><head><link rel="stylesheet" href="/style.css"></head><body>
-        <div class="container center-screen">
-            <div class="auth-box">
-                ${icons.check}
-                <h2 style="color: #38a169;">Account Created!</h2>
-                <p class="subtitle">Write down these 3 recovery codes. You will need them if you forget your password.</p>
-                
-                <div class="recovery-box">
-                    <ul>
-                        ${rawCodes.map(c => `<li>${c}</li>`).join('')}
-                    </ul>
+        await newUser.save();
+
+        res.send(`
+            <html><head><link rel="stylesheet" href="/style.css"></head><body>
+            <div class="container center-screen">
+                <div class="auth-box">
+                    ${icons.check}
+                    <h2 style="color: #38a169;">Account Created!</h2>
+                    <p class="subtitle">Write down these 3 recovery codes. You will need them if you forget your password.</p>
+                    <div class="recovery-box">
+                        <ul>
+                            ${rawCodes.map(c => `<li>${c}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <p style="color: #e53e3e; font-weight: bold; margin-top: 15px; font-size: 0.9rem;">Warning: These codes will only be shown once!</p>
+                    <a href="/auth/login" class="btn-full" style="display:block; text-decoration:none; margin-top:20px;">Proceed to Login</a>
                 </div>
-                
-                <p style="color: #e53e3e; font-weight: bold; margin-top: 15px; font-size: 0.9rem;">Warning: These codes will only be shown once!</p>
-                
-                <a href="/auth/login" class="btn-full" style="display:block; text-decoration:none; margin-top:20px;">Proceed to Login</a>
             </div>
-        </div>
-        </body></html>
-    `);
+            </body></html>
+        `);
+    } catch (error) {
+        console.error('Signup error:', error);
+        res.send('Something went wrong. <a href="/auth/signup">Try again</a>');
+    }
 });
 
+// Login Page (GET)
 router.get('/login', (req, res) => {
     res.send(`
         <html><head><link rel="stylesheet" href="/style.css"></head><body>
@@ -121,7 +120,6 @@ router.get('/login', (req, res) => {
             <div class="auth-box">
                 <h2>Welcome Back</h2>
                 <p class="subtitle">Login to your EliGet account.</p>
-                
                 <form action="/auth/login" method="POST">
                     <div class="form-group">
                         <label>Username</label>
@@ -133,7 +131,6 @@ router.get('/login', (req, res) => {
                     </div>
                     <button type="submit" class="btn-full">Login</button>
                 </form>
-                
                 <div class="auth-links">
                     Don't have an account? <a href="/auth/signup">Sign Up</a>
                 </div>
@@ -144,20 +141,30 @@ router.get('/login', (req, res) => {
     `);
 });
 
+// Login POST
 router.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-    const data = getUsers();
+    try {
+        const { username, password } = req.body;
 
-    const user = data.users.find(u => u.username === username);
-    if (!user) return res.send('User not found. <a href="/auth/login">Try again</a>');
+        const user = await User.findOne({ username: username });
+        if (!user) {
+            return res.send('User not found. <a href="/auth/login">Try again</a>');
+        }
 
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) return res.send('Incorrect password. <a href="/auth/login">Try again</a>');
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        if (!isMatch) {
+            return res.send('Incorrect password. <a href="/auth/login">Try again</a>');
+        }
 
-    req.session.user = username;
-    res.redirect('/');
+        req.session.user = username;
+        res.redirect('/');
+    } catch (error) {
+        console.error('Login error:', error);
+        res.send('Something went wrong. <a href="/auth/login">Try again</a>');
+    }
 });
 
+// Logout
 router.get('/logout', (req, res) => {
     req.session.destroy();
     res.redirect('/');
