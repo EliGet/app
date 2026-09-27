@@ -18,41 +18,67 @@ function generateRecoveryCodes() {
     return codes;
 }
 
-function wapPage(title, body) {
+function escapeXml(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function wapPage(title, body, options = {}) {
+    const autoRefresh = options.refresh
+        ? `<meta http-equiv="refresh" content="${options.refresh}"/>`
+        : '';
+    const backLink = options.back
+        ? `<p><small><a href="${options.back}">Back</a> | <a href="/wap">Home</a></small></p>`
+        : '';
     return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<title>${title}</title>
+${autoRefresh}
+<title>${escapeXml(title)}</title>
 </head>
 <body>
-<h3>${title}</h3>
+<h3>${escapeXml(title)}</h3>
 ${body}
 <hr/>
-<p><small>EliGet</small></p>
+${backLink}
+<p><small>EliGet - Text-only network</small></p>
 </body>
 </html>`;
 }
 
 // ===== HOME MENU =====
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     const isLoggedIn = req.session.user ? true : false;
     const username = req.session.user || '';
 
     let menu = '';
     if (isLoggedIn) {
+        // Count unread requests
+        let notifBadge = '';
+        try {
+            const FriendRequest = require('../models/FriendRequest');
+            const count = await FriendRequest.countDocuments({ to: username, status: 'pending' });
+            if (count > 0) notifBadge = ` (${count})`;
+        } catch (e) {}
+
         menu = `
-            <p>Welcome, ${username}</p>
+            <p>Welcome, <b>${escapeXml(username)}</b></p>
             <p><a href="/wap/feed">1. Feed</a></p>
             <p><a href="/wap/post">2. New Post</a></p>
             <p><a href="/wap/chat">3. Chat</a></p>
-            <p><a href="/wap/profile">4. Profile</a></p>
-            <p><a href="/wap/logout">5. Logout</a></p>
+            <p><a href="/wap/notifications">4. Notifications${notifBadge}</a></p>
+            <p><a href="/wap/profile">5. Profile</a></p>
+            <p><a href="/wap/logout">6. Logout</a></p>
         `;
     } else {
         menu = `
-            <p>Text-only network</p>
+            <p>Text-only, anti-addiction network</p>
             <p><a href="/wap/login">1. Login</a></p>
             <p><a href="/wap/signup">2. Signup</a></p>
             <p><a href="/wap/feed">3. Feed (read only)</a></p>
@@ -71,9 +97,8 @@ router.get('/login', (req, res) => {
             <p><input type="submit" value="Login"/></p>
         </form>
         <p><a href="/wap/signup">Signup</a></p>
-        <p><a href="/wap">Back to Home</a></p>
     `;
-    res.send(wapPage('Login', body));
+    res.send(wapPage('Login', body, { back: '/wap' }));
 });
 
 router.post('/login', async (req, res) => {
@@ -107,9 +132,8 @@ router.get('/signup', (req, res) => {
             <p><input type="submit" value="Signup"/></p>
         </form>
         <p><a href="/wap/login">Already have account? Login</a></p>
-        <p><a href="/wap">Back to Home</a></p>
     `;
-    res.send(wapPage('Create Account', body));
+    res.send(wapPage('Create Account', body, { back: '/wap' }));
 });
 
 router.post('/signup', async (req, res) => {
@@ -162,10 +186,16 @@ router.get('/logout', (req, res) => {
     res.redirect('/wap');
 });
 
-// ===== FEED =====
+// ===== FEED (with pagination) =====
 router.get('/feed', async (req, res) => {
     try {
-        const posts = await Post.find().sort({ created_at: -1 }).limit(10);
+        const page = parseInt(req.query.page) || 1;
+        const perPage = 5;
+        const skip = (page - 1) * perPage;
+
+        const totalPosts = await Post.countDocuments();
+        const totalPages = Math.ceil(totalPosts / perPage);
+        const posts = await Post.find().sort({ created_at: -1 }).skip(skip).limit(perPage);
 
         let html = '';
         if (posts.length === 0) {
@@ -178,24 +208,32 @@ router.get('/feed', async (req, res) => {
 
                 let body = p.body;
                 let readMore = '';
-                if (body.length > 100) {
-                    body = body.substring(0, 100) + '...';
+                if (body.length > 120) {
+                    body = body.substring(0, 120) + '...';
                     readMore = ` <a href="/wap/post/${p._id}">Read more</a>`;
                 }
 
-                html += `<p>${i + 1}. <b>${displayName}</b><br/>${body}${readMore}</p>`;
+                html += `<p>${skip + i + 1}. <b>${escapeXml(displayName)}</b><br/>${escapeXml(body)}${readMore}</p>`;
+            }
+
+            // Pagination
+            html += '<hr/>';
+            if (page > 1) {
+                html += `<a href="/wap/feed?page=${page - 1}">Previous</a> `;
+            }
+            html += `[Page ${page} of ${totalPages}] `;
+            if (page < totalPages) {
+                html += `<a href="/wap/feed?page=${page + 1}">Next</a>`;
             }
         }
 
-        html += `<p><a href="/wap">Home</a></p>`;
-
-        res.send(wapPage('Feed', html));
+        res.send(wapPage('Feed', html, { back: '/wap' }));
     } catch (err) {
         res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap">Home</a></p>`));
     }
 });
 
-// ===== SINGLE POST VIEW (Read More) =====
+// ===== SINGLE POST VIEW =====
 router.get('/post/:id', async (req, res) => {
     try {
         const post = await Post.findById(req.params.id);
@@ -207,58 +245,16 @@ router.get('/post/:id', async (req, res) => {
         const displayName = author ? (author.full_name || author.username) : post.author;
 
         const html = `
-            <p><b>${displayName}</b></p>
+            <p><b>${escapeXml(displayName)}</b></p>
             <hr/>
-            <p>${post.body}</p>
-            <hr/>
-            <p><a href="/wap/feed">Back to Feed</a></p>
+            <p>${escapeXml(post.body)}</p>
         `;
 
-        res.send(wapPage('Post', html));
+        res.send(wapPage('Post', html, { back: '/wap/feed' }));
     } catch (err) {
         res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap/feed">Back to Feed</a></p>`));
     }
 });
-
-// ===== PROFILE =====
-router.get('/profile', async (req, res) => {
-    if (!req.session.user) return res.redirect('/wap/login');
-
-    try {
-        const user = await User.findOne({ username: req.session.user });
-        if (!user) return res.redirect('/wap/logout');
-
-        const posts = await Post.find({ author: req.session.user }).sort({ created_at: -1 }).limit(5);
-
-        let postsHtml = '';
-        if (posts.length === 0) {
-            postsHtml = '<p>You have no posts yet.</p>';
-        } else {
-            posts.forEach((p, i) => {
-                let body = p.body;
-                if (body.length > 80) body = body.substring(0, 80) + '...';
-                postsHtml += `<p>${i + 1}. ${body}</p>`;
-            });
-        }
-
-        const html = `
-            <p>Name: <b>${user.full_name}</b></p>
-            <p>Username: @${user.username}</p>
-            <hr/>
-            <p><b>My Posts:</b></p>
-            ${postsHtml}
-            <hr/>
-            <p><a href="/wap">Home</a></p>
-            <p><a href="/wap/logout">Logout</a></p>
-        `;
-
-        res.send(wapPage('My Profile', html));
-    } catch (err) {
-        res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap">Home</a></p>`));
-    }
-});
-
-module.exports = router;
 
 // ===== NEW POST =====
 router.get('/post', (req, res) => {
@@ -269,9 +265,8 @@ router.get('/post', (req, res) => {
             <textarea name="body" rows="5" cols="20" maxlength="300"></textarea></p>
             <p><input type="submit" value="Post"/></p>
         </form>
-        <p><a href="/wap">Back to Home</a></p>
     `;
-    res.send(wapPage('New Post', body));
+    res.send(wapPage('New Post', body, { back: '/wap' }));
 });
 
 router.post('/post', async (req, res) => {
@@ -290,12 +285,13 @@ router.post('/post', async (req, res) => {
     }
 });
 
-// ===== CHAT LIST =====
+// ===== CHAT LIST (with last message preview) =====
 router.get('/chat', async (req, res) => {
     if (!req.session.user) return res.redirect('/wap/login');
     try {
         const me = req.session.user;
         const FriendRequest = require('../models/FriendRequest');
+        const Message = require('../models/Message');
 
         const accepted = await FriendRequest.find({
             status: 'accepted',
@@ -304,19 +300,35 @@ router.get('/chat', async (req, res) => {
 
         let html = '';
         if (accepted.length === 0) {
-            html = '<p>No chats yet. Add friends first.</p>';
+            html = '<p>No chats yet.</p>';
         } else {
-            accepted.forEach((r, i) => {
+            for (let i = 0; i < accepted.length; i++) {
+                const r = accepted[i];
                 const other = r.from === me ? r.to : r.from;
-                html += `<p>${i + 1}. <a href="/wap/chat/${other}">${other}</a></p>`;
-            });
+
+                function getChatId(u1, u2) {
+                    const users = [u1.toLowerCase(), u2.toLowerCase()].sort();
+                    return `${users[0]}_${users[1]}`;
+                }
+
+                const lastMsg = await Message.findOne({ chat_id: getChatId(me, other) }).sort({ created_at: -1 });
+                const unread = await Message.countDocuments({ chat_id: getChatId(me, other), from: other, read: false });
+
+                let preview = 'No messages yet';
+                if (lastMsg) {
+                    preview = lastMsg.body.length > 30 ? lastMsg.body.substring(0, 30) + '...' : lastMsg.body;
+                }
+
+                const newBadge = unread > 0 ? ' <b>*NEW*</b>' : '';
+                html += `<p>${i + 1}. <a href="/wap/chat/${other}"><b>${escapeXml(other)}</b></a>${newBadge}<br/><small>${escapeXml(preview)}</small></p>`;
+            }
         }
 
         html += `<p><a href="/wap/add-friends">Add Friends</a></p>`;
-        html += `<p><a href="/wap">Home</a></p>`;
 
-        res.send(wapPage('Chats', html));
+        res.send(wapPage('Chats', html, { back: '/wap' }));
     } catch (err) {
+        console.error('Chat list error:', err);
         res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap">Home</a></p>`));
     }
 });
@@ -330,30 +342,38 @@ router.get('/add-friends', async (req, res) => {
         const allUsers = await User.find({ username: { $ne: me } }).limit(20);
 
         let html = '';
-        if (allUsers.length === 0) {
-            html = '<p>No other users.</p>';
-        } else {
-            for (const u of allUsers) {
-                const existing = await FriendRequest.findOne({
-                    $or: [
-                        { from: me, to: u.username },
-                        { from: u.username, to: me }
-                    ]
-                });
+        let hasAny = false;
 
-                if (existing && existing.status === 'accepted') continue;
-                if (existing && existing.status === 'pending' && existing.from === me) {
-                    html += `<p>${u.full_name} - <b>Requested</b></p>`;
-                } else {
-                    html += `<p>${u.full_name} (@${u.username}) - <a href="/wap/request/${u.username}">Request</a></p>`;
-                }
+        for (const u of allUsers) {
+            const existing = await FriendRequest.findOne({
+                $or: [
+                    { from: me, to: u.username },
+                    { from: u.username, to: me }
+                ]
+            });
+
+            if (existing && existing.status === 'accepted') continue;
+
+            hasAny = true;
+
+            if (existing && existing.status === 'pending' && existing.from === me) {
+                html += `<p>${escapeXml(u.full_name)} - <b>Requested</b></p>`;
+            } else if (existing && existing.status === 'pending' && existing.to === me) {
+                html += `<p>${escapeXml(u.full_name)} - <a href="/wap/notifications">Respond</a></p>`;
+            } else {
+                html += `<p>${escapeXml(u.full_name)} (@${escapeXml(u.username)})<br/><a href="/wap/request/${u.username}">Send Request</a></p>`;
             }
         }
 
-        html += `<p><a href="/wap/chat">Back</a></p>`;
-        res.send(wapPage('Add Friends', html));
+        if (!hasAny) {
+            html = '<p>No other users available right now.</p>';
+        }
+
+        html += `<p><a href="/wap/chat">Back to Chats</a></p>`;
+        res.send(wapPage('Add Friends', html, { back: '/wap/chat' }));
     } catch (err) {
-        res.send(wapPage('Error', `<p>Something went wrong.</p>`));
+        console.error('Add friends error:', err);
+        res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap">Home</a></p>`));
     }
 });
 
@@ -381,7 +401,7 @@ router.get('/request/:target', async (req, res) => {
     }
 });
 
-// ===== NOTIFICATIONS (Friend Requests) =====
+// ===== NOTIFICATIONS =====
 router.get('/notifications', async (req, res) => {
     if (!req.session.user) return res.redirect('/wap/login');
     try {
@@ -394,14 +414,14 @@ router.get('/notifications', async (req, res) => {
             html = '<p>No new notifications.</p>';
         } else {
             for (const r of pending) {
-                html += `<p>${r.from} wants to chat. <a href="/wap/accept/${r._id}">Accept</a></p>`;
+                html += `<p><b>${escapeXml(r.from)}</b> wants to chat.</p>
+                         <p><a href="/wap/accept/${r._id}">[Accept]</a></p>`;
             }
         }
 
-        html += `<p><a href="/wap">Home</a></p>`;
-        res.send(wapPage('Notifications', html));
+        res.send(wapPage('Notifications', html, { back: '/wap' }));
     } catch (err) {
-        res.send(wapPage('Error', '<p>Error loading notifications.</p>'));
+        res.send(wapPage('Error', '<p>Error loading notifications.</p><p><a href="/wap">Home</a></p>'));
     }
 });
 
@@ -417,7 +437,7 @@ router.get('/accept/:id', async (req, res) => {
     }
 });
 
-// ===== CHAT ROOM =====
+// ===== CHAT ROOM (with auto-refresh + quick reply) =====
 router.get('/chat/:withUser', async (req, res) => {
     if (!req.session.user) return res.redirect('/wap/login');
     try {
@@ -432,33 +452,57 @@ router.get('/chat/:withUser', async (req, res) => {
 
         const chatId = getChatId(me, withUser);
 
-        // Mark as read
+        // Mark received as read
         await Message.updateMany({ chat_id: chatId, from: withUser, read: false }, { read: true });
 
         const messages = await Message.find({ chat_id: chatId }).sort({ created_at: 1 }).limit(30);
 
         let html = '';
         if (messages.length === 0) {
-            html = '<p>No messages yet.</p>';
+            html = '<p>No messages yet. Say hi!</p>';
         } else {
             messages.forEach(m => {
                 const sender = m.from === me ? 'You' : m.from;
-                html += `<p><b>${sender}:</b> ${m.body}</p>`;
+                html += `<p><b>${escapeXml(sender)}:</b> ${escapeXml(m.body)}</p>`;
             });
         }
 
         html += `
             <hr/>
-            <form action="/wap/chat/${withUser}" method="POST">
+            <form action="/wap/chat/${escapeXml(withUser)}" method="POST">
                 <p><input type="text" name="body" size="15" maxlength="200" required/></p>
                 <p><input type="submit" value="Send"/></p>
             </form>
-            <p><a href="/wap/chat/${withUser}">Refresh</a></p>
-            <p><a href="/wap/chat">Back to Chats</a></p>
+            <hr/>
+            <p><b>Quick Reply:</b></p>
+            <form action="/wap/chat/${escapeXml(withUser)}" method="POST" style="display:inline;">
+                <input type="hidden" name="body" value="Hi"/>
+                <input type="submit" value="Hi"/>
+            </form>
+            <form action="/wap/chat/${escapeXml(withUser)}" method="POST" style="display:inline;">
+                <input type="hidden" name="body" value="Ok"/>
+                <input type="submit" value="Ok"/>
+            </form>
+            <form action="/wap/chat/${escapeXml(withUser)}" method="POST" style="display:inline;">
+                <input type="hidden" name="body" value="Yes"/>
+                <input type="submit" value="Yes"/>
+            </form>
+            <form action="/wap/chat/${escapeXml(withUser)}" method="POST" style="display:inline;">
+                <input type="hidden" name="body" value="No"/>
+                <input type="submit" value="No"/>
+            </form>
+            <form action="/wap/chat/${escapeXml(withUser)}" method="POST" style="display:inline;">
+                <input type="hidden" name="body" value="Thanks"/>
+                <input type="submit" value="Thanks"/>
+            </form>
         `;
 
-        res.send(wapPage('Chat: ' + withUser, html));
+        res.send(wapPage('Chat: ' + withUser, html, {
+            back: '/wap/chat',
+            refresh: 30  // Auto-refresh every 30 seconds
+        }));
     } catch (err) {
+        console.error('Chat room error:', err);
         res.send(wapPage('Error', `<p>Error loading chat.</p><p><a href="/wap/chat">Back</a></p>`));
     }
 });
@@ -488,3 +532,42 @@ router.post('/chat/:withUser', async (req, res) => {
         res.redirect(`/wap/chat/${withUser}`);
     }
 });
+
+// ===== PROFILE =====
+router.get('/profile', async (req, res) => {
+    if (!req.session.user) return res.redirect('/wap/login');
+
+    try {
+        const user = await User.findOne({ username: req.session.user });
+        if (!user) return res.redirect('/wap/logout');
+
+        const posts = await Post.find({ author: req.session.user }).sort({ created_at: -1 }).limit(5);
+
+        let postsHtml = '';
+        if (posts.length === 0) {
+            postsHtml = '<p>You have no posts yet.</p>';
+        } else {
+            posts.forEach((p, i) => {
+                let body = p.body;
+                if (body.length > 80) body = body.substring(0, 80) + '...';
+                postsHtml += `<p>${i + 1}. ${escapeXml(body)}</p>`;
+            });
+        }
+
+        const html = `
+            <p>Name: <b>${escapeXml(user.full_name)}</b></p>
+            <p>Username: @${escapeXml(user.username)}</p>
+            <hr/>
+            <p><b>My Posts:</b></p>
+            ${postsHtml}
+            <hr/>
+            <p><a href="/wap/logout">Logout</a></p>
+        `;
+
+        res.send(wapPage('My Profile', html, { back: '/wap' }));
+    } catch (err) {
+        res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap">Home</a></p>`));
+    }
+});
+
+module.exports = router;
