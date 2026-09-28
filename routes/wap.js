@@ -35,7 +35,7 @@ function wapPage(title, body, options = {}) {
     const userParam = user ? '?u=' + encodeURIComponent(user) : '';
     const backUrl = options.back ? (options.back + userParam) : '';
     const backLink = backUrl
-        ? `<p><small><a href="${backUrl}">Back</a> | <a href="/wap${userParam}">Home</a></small></p>`
+        ? `<p><small><a href="${backUrl}">Back</a> | <a href="/wap">Home</a></small></p>`
         : '';
     // Auto-append ?u= to all /wap links in body if user is set
     let processedBody = body;
@@ -55,6 +55,7 @@ function wapPage(title, body, options = {}) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 ${autoRefresh}
 <title>${escapeXml(title)}</title>
 </head>
@@ -107,7 +108,7 @@ router.get('/', async (req, res) => {
 // ===== LOGIN =====
 router.get('/login', (req, res) => {
     const body = `
-        <form action="/wap/login${userParam}" method="POST">
+        <form action="/wap/login" method="POST">
             <p>Username:<br/><input type="text" name="username" size="12" maxlength="20"/></p>
             <p>Password:<br/><input type="password" name="password" size="12" maxlength="30"/></p>
             <p><input type="submit" value="Login"/></p>
@@ -141,7 +142,7 @@ router.post('/login', async (req, res) => {
 // ===== SIGNUP =====
 router.get('/signup', (req, res) => {
     const body = `
-        <form action="/wap/signup${userParam}" method="POST">
+        <form action="/wap/signup" method="POST">
             <p>Full Name:<br/><input type="text" name="full_name" size="15" maxlength="30"/></p>
             <p>Username:<br/><input type="text" name="username" size="12" maxlength="20"/></p>
             <p>Password:<br/><input type="password" name="password" size="12" maxlength="30"/></p>
@@ -276,7 +277,7 @@ router.get('/post/:id', async (req, res) => {
 router.get('/post', (req, res) => {
     if (!req.session.user) return res.redirect('/wap/login');
     const body = `
-        <form action="/wap/post${userParam}" method="POST">
+        <form action="/wap/post" method="POST">
             <p>Your thoughts (max 300):<br/>
             <textarea name="body" rows="5" cols="20" maxlength="300"></textarea></p>
             <p><input type="submit" value="Post"/></p>

@@ -138,7 +138,7 @@ router.get('/', async (req, res) => {
         const pendingCount = await FriendRequest.countDocuments({ to: me, status: 'pending' });
 
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"></head><body>
+            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
             <div class="container">
                 <header>
                     <span class="profile-title">Chats</span>
@@ -214,7 +214,7 @@ router.get('/new', async (req, res) => {
         }
 
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"></head><body>
+            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
             <div class="container">
                 <header>
                     <span class="profile-title">Add Friends</span>
@@ -306,7 +306,7 @@ router.get('/notifications', async (req, res) => {
         }
 
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"></head><body>
+            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
             <div class="container">
                 <header>
                     <span class="profile-title">Notifications</span>
@@ -392,7 +392,7 @@ router.get('/:withUser', async (req, res) => {
         }
 
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"></head><body>
+            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
             <div class="container">
                 <header>
                     <span class="profile-title">${displayName}</span>

@@ -424,7 +424,7 @@ app.get('/', async (req, res) => {
     }
     if (req.session.user) {
         const posts = await Post.find().sort({ created_at: -1 }).limit(50);
-        let html = '<html><head><link rel="stylesheet" href="/style.css"></head><body><div class="container">';
+        let html = '<html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body><div class="container">';
         html += '<header><h1 class="feed-title">EliGet Feed</h1></header>';
         
         if (posts.length === 0) {
@@ -441,17 +441,45 @@ app.get('/', async (req, res) => {
         res.send(html);
     } else {
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"></head><body>
+            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
             <div class="container">
-                <div class="hero"><h1>EliGet</h1><p>Text-only, anti-addiction network.</p><p class="hero-sub">No algorithms. No videos. Just pure thoughts.</p></div>
-                <div class="features-grid">
-                    <div class="feature-card">${icons.chat}<h3>Chat</h3><p>Direct text messaging with friends.</p></div>
-                    <div class="feature-card">${icons.feed}<h3>Feed</h3><p>Read new posts and share your thoughts.</p></div>
-                    <div class="feature-card">${icons.plus}<h3>Post</h3><p>Write your mind, without images or videos.</p></div>
-                    <div class="feature-card">${icons.profile}<h3>No Algorithm</h3><p>No dopamine loops, just clean text.</p></div>
+                <div class="landing-hero">
+                    <h1 class="elget-wordmark elget-wordmark-lg" style="margin-bottom: 10px;">EliGet</h1>
+                    <p class="landing-tagline">Text-only, anti-addiction network.</p>
+                    <p class="landing-sub">No algorithms. No videos. Just pure thoughts.</p>
                 </div>
-                <div class="action-buttons"><a href="/auth/login" class="btn btn-primary">Login</a><a href="/auth/signup" class="btn btn-secondary">Create Account</a></div>
-                <div class="browse-link"><a href="/feed">${icons.feed} Browse Feed without Account</a></div>
+
+                <div class="landing-features">
+                    <div class="landing-card">
+                        <div class="landing-card-icon">${icons.chat}</div>
+                        <h3>Chat</h3>
+                        <p>Direct text messaging with friends.</p>
+                    </div>
+                    <div class="landing-card">
+                        <div class="landing-card-icon">${icons.feed}</div>
+                        <h3>Feed</h3>
+                        <p>Read posts, share your thoughts.</p>
+                    </div>
+                    <div class="landing-card">
+                        <div class="landing-card-icon">${icons.plus}</div>
+                        <h3>Post</h3>
+                        <p>Write your mind, no images or videos.</p>
+                    </div>
+                    <div class="landing-card">
+                        <div class="landing-card-icon">${icons.profile}</div>
+                        <h3>No Algorithm</h3>
+                        <p>No dopamine loops, just clean text.</p>
+                    </div>
+                </div>
+
+                <div class="landing-cta">
+                    <a href="/auth/login" class="landing-btn-primary">Login</a>
+                    <a href="/auth/signup" class="landing-btn-secondary">Create Account</a>
+                </div>
+
+                <div class="landing-footer">
+                    <a href="/feed">${icons.feed} Browse Feed without Account</a>
+                </div>
             </div>
             </body></html>
         `);
@@ -461,7 +489,7 @@ app.get('/', async (req, res) => {
 // ===== FEED (PUBLIC) =====
 app.get('/feed', async (req, res) => {
     const posts = await Post.find().sort({ created_at: -1 }).limit(50);
-    let html = '<html><head><link rel="stylesheet" href="/style.css"></head><body><div class="container">';
+    let html = '<html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body><div class="container">';
     html += '<header><h1 class="feed-title">Feed</h1></header>';
     
     if (posts.length === 0) {
@@ -509,7 +537,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
     }
 
     res.send(`
-        <html><head><link rel="stylesheet" href="/style.css"></head><body>
+        <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
         <div class="container">
             <header><span class="profile-title">Your EliGet Profile</span><a href="/settings" class="settings-icon" title="Settings">${icons.settings}</a></header>
             <div class="profile-card">
@@ -626,7 +654,7 @@ app.get('/profile/avatar', isAuthenticated, async (req, res) => {
     }
 
     res.send(`
-        <html><head><link rel="stylesheet" href="/style.css"></head><body>
+        <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
         <div class="container">
             <header>
                 <span class="profile-title">Choose Avatar</span>
@@ -656,7 +684,7 @@ app.get('/settings', isAuthenticated, async (req, res) => {
     const showToast = req.query.status === 'saved';
 
     res.send(`
-        <html><head><link rel="stylesheet" href="/style.css"></head><body>
+        <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
         ${showToast ? `<div class="toast">${icons.check} Saved successfully!</div>` : ''}
         <div class="container">
             <header><span class="settings-page-title">Settings</span><a href="/profile" class="header-icon" title="Back">${icons.back}</a></header>
@@ -729,4 +757,46 @@ app.post('/settings/delete', isAuthenticated, async (req, res) => {
 // ===== START SERVER =====
 connectDB().then(() => {
     app.listen(PORT, '0.0.0.0', () => { console.log('EliGet সার্ভার চালু হয়েছে: http://localhost:' + PORT); });
+});
+
+// ===== SPLASH SCREEN =====
+app.get('/splash', (req, res) => {
+    res.send(`
+        <html><head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        <title>EliGet</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(180deg, #f5f7fa 0%, #ebf8ff 100%); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+            .splash { text-align: center; animation: fadeIn 0.6s ease-out; }
+            .logo { width: 120px; height: 120px; border-radius: 26px; background: linear-gradient(135deg, #3182ce, #1e3a8a); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; position: relative; box-shadow: 0 12px 32px rgba(49,130,206,0.3); }
+            .logo-text { color: white; font-size: 48px; font-weight: 900; letter-spacing: -2px; }
+            .dots { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; }
+            .dot { width: 5px; height: 5px; border-radius: 50%; background: white; }
+            .dot:nth-child(1) { opacity: 0.5; }
+            .dot:nth-child(2) { opacity: 0.75; }
+            .dot:nth-child(3) { opacity: 1; }
+            h1 { font-size: 32px; font-weight: 700; color: #1a202c; margin-bottom: 8px; letter-spacing: 1px; }
+            p { font-size: 15px; color: #718096; }
+            @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        </style>
+        </head><body>
+        <div class="splash">
+            <div class="logo">
+                <span class="logo-text">EG</span>
+                <div class="dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+            <h1>EliGet</h1>
+            <p>Text-only, anti-addiction network</p>
+        </div>
+        <script>
+            setTimeout(() => { window.location.href = '/'; }, 1500);
+        </script>
+        </body></html>
+    `);
 });

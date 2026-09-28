@@ -79,7 +79,7 @@ router.get('/create', async (req, res) => {
         });
 
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"></head><body>
+            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
             <div class="container">
                 <header>
                     <span class="profile-title">New Group</span>
@@ -193,7 +193,7 @@ router.get('/:id', async (req, res) => {
         const displayTitle = `<span style="display:flex; align-items:center;">${groupAvatarUrl} ${group.name}</span>`;
 
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"></head><body>
+            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
             <div class="container">
                 <header>
                     <span class="profile-title">${displayTitle}</span>

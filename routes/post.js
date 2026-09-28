@@ -103,7 +103,7 @@ router.get('/create', (req, res) => {
     }
 
     res.send(`
-        <html><head><link rel="stylesheet" href="/style.css"></head><body>
+        <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
         <div class="container">
             <header><span class="profile-title">New Post</span><a href="/" class="header-icon" title="Back">${icons.back}</a></header>
             <div class="form-card">
@@ -170,7 +170,7 @@ router.get('/svg-library', (req, res) => {
     });
 
     res.send(`
-        <html><head><link rel="stylesheet" href="/style.css"></head><body>
+        <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
         <div class="container">
             <header>
                 <span class="profile-title">SVG Library</span>
@@ -248,7 +248,7 @@ router.get('/edit/:id', async (req, res) => {
         }
 
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"></head><body>
+            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
             <div class="container">
                 <header><span class="profile-title">Edit Post</span><a href="/" class="header-icon" title="Back">${icons.back}</a></header>
                 <div class="form-card">

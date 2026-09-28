@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920">
+  <defs>
+    <linearGradient id="splashBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5f7fa"/>
+      <stop offset="100%" stop-color="#ebf8ff"/>
+    </linearGradient>
+    <linearGradient id="splashLogo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3182ce"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+  </defs>
+  
+  <rect width="1080" height="1920" fill="url(#splashBg)"/>
+  
+  <rect x="390" y="760" width="300" height="300" rx="66" fill="url(#splashLogo)"/>
+  <text x="540" y="935" font-family="Arial, Helvetica, sans-serif" font-size="126" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="-5">EG</text>
+  <circle cx="480" cy="990" r="8" fill="#ffffff" opacity="0.5"/>
+  <circle cx="520" cy="990" r="8" fill="#ffffff" opacity="0.75"/>
+  <circle cx="560" cy="990" r="8" fill="#ffffff"/>
+  
+  <text x="540" y="1130" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" fill="#1a202c" text-anchor="middle" letter-spacing="2">EliGet</text>
+  <text x="540" y="1180" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="500" fill="#718096" text-anchor="middle">Text-only, anti-addiction network</text>
+  
+  <text x="540" y="1780" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="500" fill="#a0aec0" text-anchor="middle">No algorithms. No videos. Just pure thoughts.</text>
+</svg>
