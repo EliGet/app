@@ -365,6 +365,10 @@ async function renderPostCard(p, currentUser) {
             </div>
             <div class="post-content">${p.body}</div>
             ${imageHtml}
+            <a href="/post/${p._id}" class="post-reply-link">
+                <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+                ${p.replies && p.replies.length > 0 ? p.replies.length + ' ' + (p.replies.length === 1 ? 'reply' : 'replies') : 'Reply'}
+            </a>
         </div>
     `;
 }
@@ -515,6 +519,122 @@ app.get('/feed', async (req, res) => {
     }
     html += '</body></html>';
     res.send(html);
+});
+
+// ===== POST DETAIL (with replies) =====
+app.get('/post/:id', isAuthenticated, async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.redirect('/');
+
+        const author = await User.findOne({ username: post.author });
+        const displayName = author ? (author.full_name || author.username) : post.author;
+        const initial = displayName.charAt(0).toUpperCase();
+        const avatarUrl = author && author.avatar ? `<img src="${author.avatar}" alt="Avatar">` : initial;
+
+        let moodSvg = '';
+        if (post.mood && post.mood !== 'none') {
+            moodSvg = moodIcons[post.mood] || '';
+        }
+
+        const editedLabel = post.edited ? ' <span style="font-size:0.7rem;color:#a0aec0;font-weight:400;">(edited)</span>' : '';
+
+        // Post body
+        let postHtml = `
+            <div class="post-detail">
+                <div class="post-header">
+                    <a href="/profile/${post.author}" class="post-avatar-link"><div class="post-avatar">${avatarUrl}</div></a>
+                    <div class="post-user-info">
+                        <div class="post-author-row">
+                            <a href="/profile/${post.author}" class="post-author-link"><span class="post-author-name">${displayName}${editedLabel}</span></a>
+                            ${moodSvg ? `<span class="post-mood" style="fill:#3182ce">${moodSvg}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="post-detail-body">${post.body}</div>
+            </div>
+        `;
+
+        // Replies
+        let repliesHtml = '';
+        if (post.replies.length === 0) {
+            repliesHtml = '<p class="reply-empty">No replies yet. Be the first!</p>';
+        } else {
+            for (const r of post.replies) {
+                const rAuthor = await User.findOne({ username: r.author });
+                const rName = rAuthor ? (rAuthor.full_name || rAuthor.username) : r.author;
+                const rInitial = rName.charAt(0).toUpperCase();
+                const rAvatar = rAuthor && rAuthor.avatar ? `<img src="${rAuthor.avatar}" alt="Avatar">` : rInitial;
+
+                repliesHtml += `
+                    <div class="reply-item">
+                        <a href="/profile/${r.author}" class="reply-avatar-link">
+                            <div class="reply-avatar">${rAvatar}</div>
+                        </a>
+                        <div class="reply-content">
+                            <div class="reply-author">${rName}</div>
+                            <div class="reply-body">${r.body}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        const bottomNav = `<div class="bottom-nav"><a href="/" class="active">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile">${icons.profile}<span>Profile</span></a></div>`;
+
+        res.send(`
+            <html><head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="/style.css">
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+            <title>Post - EliGet</title>
+            </head><body>
+            <div class="container">
+                <header>
+                    <span class="profile-title">Post</span>
+                    <a href="/" class="header-icon" title="Back">${icons.back}</a>
+                </header>
+
+                ${postHtml}
+
+                <div class="pp-section-title" style="margin-top: 24px;">${post.replies.length} ${post.replies.length === 1 ? 'Reply' : 'Replies'}</div>
+
+                <div class="replies-list">${repliesHtml}</div>
+
+                <form class="reply-form" action="/post/${post._id}/reply" method="POST">
+                    <input type="text" name="body" required maxlength="200" placeholder="Write a reply..." autocomplete="off">
+                    <button type="submit" title="Reply">${icons.send}</button>
+                </form>
+            </div>
+            ${bottomNav}
+            </body></html>
+        `);
+    } catch (err) {
+        console.error('Post detail error:', err);
+        res.redirect('/');
+    }
+});
+
+// ===== ADD REPLY =====
+app.post('/post/:id/reply', isAuthenticated, async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.redirect('/');
+
+        const body = req.body.body.trim();
+        if (!body) return res.redirect('/post/' + req.params.id);
+
+        post.replies.push({
+            author: req.session.user,
+            body: body
+        });
+        await post.save();
+
+        res.redirect('/post/' + req.params.id);
+    } catch (err) {
+        console.error('Reply error:', err);
+        res.redirect('/');
+    }
 });
 
 // ===== PROFILE =====

@@ -891,3 +891,32 @@ header { display: flex; justify-content: space-between; align-items: center; bor
 .badge-label { font-size: 0.75rem; font-weight: 600; color: #4a5568; text-align: center; }
 
 .badge-save-bar { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; padding: 12px 20px; background: #ffffff; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 12px rgba(0,0,0,0.06); z-index: 950; display: flex; gap: 10px; box-sizing: border-box; }
+
+/* ===== Post Detail Page ===== */
+.post-detail { background: #fff; border-radius: 16px; padding: 20px; border: 1px solid #edf2f7; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 24px; }
+.post-detail-body { font-size: 1.05rem; color: #2d3748; line-height: 1.6; margin-top: 14px; word-wrap: break-word; }
+
+/* ===== Post Reply Link (on feed cards) ===== */
+.post-reply-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 6px 12px; color: #3182ce; text-decoration: none; font-size: 0.8rem; font-weight: 600; border-radius: 20px; background: #ebf8ff; transition: all 0.15s; }
+.post-reply-link:hover { background: #bee3f8; }
+.post-reply-link svg { width: 14px; height: 14px; fill: currentColor; }
+
+/* ===== Replies List ===== */
+.replies-list { margin-bottom: 100px; }
+.reply-item { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+.reply-item:last-child { border-bottom: none; }
+.reply-avatar-link { text-decoration: none; flex-shrink: 0; }
+.reply-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: #3182ce; color: #fff; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.reply-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.reply-content { flex: 1; min-width: 0; }
+.reply-author { font-size: 0.85rem; font-weight: 700; color: #1a202c; margin-bottom: 4px; }
+.reply-body { font-size: 0.95rem; color: #4a5568; line-height: 1.5; word-wrap: break-word; }
+.reply-empty { text-align: center; color: #a0aec0; font-size: 0.9rem; padding: 30px 20px; }
+
+/* ===== Reply Form (fixed bottom) ===== */
+.reply-form { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; padding: 10px 15px; background: #ffffff; border-top: 1px solid #e2e8f0; z-index: 900; display: flex; gap: 10px; box-sizing: border-box; }
+.reply-form input { flex: 1; padding: 12px 18px; border: 1px solid #cbd5e0; background: #f8fafc; border-radius: 24px; font-size: 0.95rem; outline: none; font-family: inherit; }
+.reply-form input:focus { background: #fff; border-color: #3182ce; box-shadow: 0 0 0 2px rgba(49,130,206,0.1); }
+.reply-form button { width: 44px; height: 44px; padding: 0; background: #3182ce; color: #fff; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+.reply-form button:hover { background: #2b6cb0; }
+.reply-form button svg { width: 20px; height: 20px; fill: #fff; margin-left: -2px; }
