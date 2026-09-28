@@ -207,79 +207,118 @@ router.get('/', async (req, res) => {
     }
 });
 
-// ===== ADD FRIENDS PAGE (live search) =====
+// ===== ADD FRIENDS PAGE =====
 router.get('/new', async (req, res) => {
-    const searchIconSvg = icons.search;
-    res.send(`
-        <html><head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/style.css">
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-        <title>Add Friends - EliGet</title>
-        </head><body>
-        <div class="container">
-            <header>
-                <a href="/chat" class="header-icon" title="Back">${icons.back}</a>
-                <span class="profile-title" style="flex:1;">Add Friends</span>
-            </header>
-
-            <div class="chat-search-wrap">
-                <svg class="chat-search-icon" viewBox="0 0 24 24">${searchIconSvg.match(/<path[^>]*>/)[0]}</svg>
-                <input type="text" id="userSearch" class="chat-search-input" placeholder="Search by username or name..." autocomplete="off" autofocus>
-            </div>
-
-            <div class="chat-list" id="resultsBox">
-                <p style="text-align:center; color:#a0aec0; padding:24px;">Start typing to search users.</p>
-            </div>
-        </div>
-        ${getBottomNav('chat')}
-        <script src="/user-search.js"></script>
-        </body></html>
-    `);
-});
-
-// ===== SEARCH API (JSON) =====
-router.get('/api/search', async (req, res) => {
     try {
         const me = req.session.user;
-        const q = (req.query.q || '').trim();
-        if (!q) return res.json({ ok: true, users: [] });
+        const allUsers = await User.find({ username: { $ne: me } }).limit(20);
 
-        const users = await User.find({
-            username: { $ne: me },
-            $or: [
-                { username: { $regex: q, $options: 'i' } },
-                { full_name: { $regex: q, $options: 'i' } }
-            ]
-        }).limit(20);
+        let userItemsHtml = '';
+        let hasUsers = false;
 
-        const result = [];
-        for (const u of users) {
+        for (const u of allUsers) {
             const existingReq = await FriendRequest.findOne({
                 $or: [
                     { from: me, to: u.username },
                     { from: u.username, to: me }
                 ]
             });
-            let status = 'none';
-            if (existingReq) {
-                if (existingReq.status === 'accepted') status = 'friend';
-                else if (existingReq.status === 'pending' && existingReq.from === me) status = 'requested';
-                else if (existingReq.status === 'pending' && existingReq.to === me) status = 'respond';
-            }
+
+            if (existingReq && existingReq.status === 'accepted') continue;
+
+            hasUsers = true;
             const displayName = u.full_name || u.username;
-            result.push({
-                username: u.username,
-                displayName: displayName,
-                initial: displayName.charAt(0).toUpperCase(),
-                avatar: u.avatar || '',
-                status: status
-            });
+            const initial = displayName.charAt(0).toUpperCase();
+            const avatarUrl = u.avatar ? `<img src="${u.avatar}" alt="Avatar">` : initial;
+
+            let btnHtml;
+            if (existingReq && existingReq.status === 'pending' && existingReq.from === me) {
+                btnHtml = `<button type="button" class="request-btn-requested" disabled>Requested</button>`;
+            } else if (existingReq && existingReq.status === 'pending' && existingReq.to === me) {
+                btnHtml = `<a href="/chat/notifications" class="request-btn request-btn-accept" style="text-decoration:none; display:inline-block;">Respond</a>`;
+            } else {
+                btnHtml = `<button type="button" class="request-btn request-btn-accept" onclick="sendRequest(this, '${u.username}')">Request</button>`;
+            }
+
+            userItemsHtml += `
+                <div class="chat-item">
+                    <div class="chat-avatar">${avatarUrl}</div>
+                    <div class="chat-info"><div class="chat-name">${displayName}</div></div>
+                    ${btnHtml}
+                </div>
+            `;
         }
-        res.json({ ok: true, users: result });
-    } catch (err) {
-        console.error('Search API error:', err);
-        res.json({ ok: false, users: [] });
+
+        if (!hasUsers) {
+            userItemsHtml = '<p style="text-align:center; color:#a0aec0; padding:20px;">No new users to add right now.</p>';
+        }
+
+        res.send(`
+            <html><head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="/style.css">
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+            <title>Add Friends - EliGet</title>
+            </head><body>
+            <div class="container">
+                <header>
+                    <a href="/chat" class="header-icon" title="Back">${icons.back}</a>
+                    <span class="profile-title" style="flex:1;">Add Friends</span>
+                </header>
+                <div class="chat-list">${userItemsHtml}</div>
+            </div>
+            ${getBottomNav('chat')}
+            <script>
+                function sendRequest(btn, username) {
+                    btn.disabled = true;
+                    btn.textContent = '...';
+                    fetch('/chat/api/request/' + username, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                btn.textContent = 'Requested';
+                                btn.className = 'request-btn-requested';
+                                showToast('Request Sent');
+                            } else { btn.textContent = 'Request'; btn.disabled = false; }
+                        })
+                        .catch(() => { btn.textContent = 'Request'; btn.disabled = false; });
+                }
+                function showToast(msg) {
+                    const toast = document.createElement('div');
+                    toast.className = 'toast';
+                    toast.innerHTML = '<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#68d391"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> ' + msg;
+                    document.body.appendChild(toast);
+                    setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3500);
+                }
+            </script>
+            </body></html>
+        `);
+    } catch (error) {
+        console.error('Add friends error:', error);
+        res.send('Something went wrong.');
+    }
+});
+
+// ===== AJAX REQUEST =====
+router.post('/api/request/:target', async (req, res) => {
+    try {
+        const me = req.session.user;
+        const target = req.params.target;
+
+        const existing = await FriendRequest.findOne({
+            $or: [
+                { from: me, to: target },
+                { from: target, to: me }
+            ]
+        });
+
+        if (!existing) {
+            await FriendRequest.create({ from: me, to: target, status: 'pending' });
+        }
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Request error:', error);
+        res.json({ success: false });
     }
 });
 
