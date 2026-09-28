@@ -481,23 +481,37 @@ app.get('/', async (req, res) => {
         html += '</body></html>';
         res.send(html);
     } else {
+        const latestPosts = await Post.find().sort({ created_at: -1 }).limit(2);
         let previewHtml = '';
-        const demos = [
-            { name: 'Ayesha Khatun', text: 'The best conversations happen when nobody is trying to win.', likes: 12, time: '2h', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Ayesha' },
-            { name: 'Tanvir Hasan', text: 'Wrote three pages in my notebook today. No screen, just ink.', likes: 8, time: '5h', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Tanvir' },
-            { name: 'Samira Rahman', text: 'Quiet mornings are underrated. So is saying nothing.', likes: 24, time: '1d', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Samira' }
-        ];
-        for (const d of demos) {
-            previewHtml += `
-                <div class="lp-post">
-                    <div class="lp-post-head">
-                        <div class="lp-post-avatar has-img"><img src="${d.avatar}" alt=""></div>
-                        <span class="lp-post-author">${d.name}</span>
+        if (latestPosts.length > 0) {
+            for (const p of latestPosts) {
+                const author = await User.findOne({ username: p.author });
+                const dn = author ? (author.full_name || author.username) : p.author;
+                const initial = dn.charAt(0).toUpperCase();
+                const av = author && author.avatar ? `<img src="${author.avatar}" alt="">` : initial;
+                const likeCount = (p.likes || []).length;
+                const diffMs = Date.now() - new Date(p.created_at).getTime();
+                const diffMin = Math.floor(diffMs / 60000);
+                let timeStr;
+                if (diffMin < 1) timeStr = 'just now';
+                else if (diffMin < 60) timeStr = diffMin + 'm';
+                else if (diffMin < 1440) timeStr = Math.floor(diffMin / 60) + 'h';
+                else if (diffMin < 10080) timeStr = Math.floor(diffMin / 1440) + 'd';
+                else timeStr = new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                const bodyText = p.body.length > 140 ? p.body.slice(0, 140) + '\u2026' : p.body;
+                previewHtml += `
+                    <div class="lp-post">
+                        <div class="lp-post-head">
+                            <div class="lp-post-avatar">${av}</div>
+                            <span class="lp-post-author">${dn}</span>
+                        </div>
+                        <p class="lp-post-body">${bodyText}</p>
+                        <div class="lp-post-meta"><span>${timeStr}</span><span class="lp-post-dot">·</span><span>${likeCount} ${likeCount === 1 ? 'like' : 'likes'}</span></div>
                     </div>
-                    <p class="lp-post-body">${d.text}</p>
-                    <div class="lp-post-meta"><span>${d.time}</span><span class="lp-post-dot">·</span><span>${d.likes} likes</span></div>
-                </div>
-            `;
+                `;
+            }
+        } else {
+            previewHtml = '<p class="lp-post-empty">No thoughts shared yet. Be the first.</p>';
         }
 
         res.send(`

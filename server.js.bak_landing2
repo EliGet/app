@@ -481,25 +481,6 @@ app.get('/', async (req, res) => {
         html += '</body></html>';
         res.send(html);
     } else {
-        let previewHtml = '';
-        const demos = [
-            { name: 'Ayesha Khatun', text: 'The best conversations happen when nobody is trying to win.', likes: 12, time: '2h', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Ayesha' },
-            { name: 'Tanvir Hasan', text: 'Wrote three pages in my notebook today. No screen, just ink.', likes: 8, time: '5h', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Tanvir' },
-            { name: 'Samira Rahman', text: 'Quiet mornings are underrated. So is saying nothing.', likes: 24, time: '1d', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Samira' }
-        ];
-        for (const d of demos) {
-            previewHtml += `
-                <div class="lp-post">
-                    <div class="lp-post-head">
-                        <div class="lp-post-avatar has-img"><img src="${d.avatar}" alt=""></div>
-                        <span class="lp-post-author">${d.name}</span>
-                    </div>
-                    <p class="lp-post-body">${d.text}</p>
-                    <div class="lp-post-meta"><span>${d.time}</span><span class="lp-post-dot">·</span><span>${d.likes} likes</span></div>
-                </div>
-            `;
-        }
-
         res.send(`
             <html><head>
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -507,55 +488,28 @@ app.get('/', async (req, res) => {
             <link rel="icon" type="image/svg+xml" href="/favicon.svg">
             <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
             <title>EliGet</title>
-            </head><body class="lp-body">
-            <div class="lp-wrap">
-
-                <nav class="lp-nav">
-                    <span class="lp-brand">EliGet<span class="lp-brand-dot"></span></span>
-                    <div class="lp-nav-links">
-                        <a href="#features">Features</a>
-                        <a href="/auth/login">Login</a>
-                    </div>
-                </nav>
-
-                <section class="lp-hero">
-                    <h1 class="lp-headline">A social network<br>for people who think.</h1>
-                    <p class="lp-sub">Text-only. No algorithms. No videos.<br>Just pure thoughts.</p>
-                </section>
-
-                <div class="lp-cta">
-                    <a href="/auth/signup" class="lp-btn-primary">Create Account <span class="lp-arrow">\u2192</span></a>
-                    <a href="/auth/login" class="lp-btn-secondary">Login</a>
+            </head><body>
+            <div class="container">
+                <div class="landing-hero">
+                    <h1 class="elget-wordmark elget-wordmark-lg">EliGet</h1>
+                    <p class="landing-tagline">Text-only network.</p>
+                    <p class="landing-sub">No algorithms. No videos.<br>Just pure thoughts.</p>
                 </div>
 
-                <section class="lp-features" id="features">
-                    <h2 class="lp-features-title">Built around conversation</h2>
-                    <div class="lp-feature-grid">
-                        <div class="lp-feature">
-                            <div class="lp-feature-label">Text-first</div>
-                            <div class="lp-feature-text">Share ideas</div>
-                        </div>
-                        <div class="lp-feature">
-                            <div class="lp-feature-label">Real-time</div>
-                            <div class="lp-feature-text">Chat</div>
-                        </div>
-                        <div class="lp-feature">
-                            <div class="lp-feature-label">Simple Feed</div>
-                            <div class="lp-feature-text">No noise</div>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="lp-preview">
-                    <h2 class="lp-preview-title">Latest thoughts</h2>
-                    ${previewHtml}
-                </section>
-
-                <div class="lp-guest">
-                    <span class="lp-guest-text">Not ready to join?</span>
-                    <a href="/feed" class="lp-guest-link">Browse the public feed \u2192</a>
+                <div class="landing-cta">
+                    <a href="/auth/signup" class="landing-btn-primary">Create Account</a>
+                    <a href="/auth/login" class="landing-btn-link">Already have an account? Login</a>
                 </div>
 
+                <div class="landing-pills">
+                    <span class="landing-pill">${icons.chat}<span>Chat</span></span>
+                    <span class="landing-pill">${icons.feed}<span>Feed</span></span>
+                    <span class="landing-pill">${icons.plus}<span>Post</span></span>
+                </div>
+
+                <div class="landing-footer">
+                    <a href="/feed" class="landing-btn-tertiary">Browse Feed →</a>
+                </div>
             </div>
             </body></html>
         `);

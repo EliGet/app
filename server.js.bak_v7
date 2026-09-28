@@ -483,15 +483,16 @@ app.get('/', async (req, res) => {
     } else {
         let previewHtml = '';
         const demos = [
-            { name: 'Ayesha Khatun', text: 'The best conversations happen when nobody is trying to win.', likes: 12, time: '2h', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Ayesha' },
-            { name: 'Tanvir Hasan', text: 'Wrote three pages in my notebook today. No screen, just ink.', likes: 8, time: '5h', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Tanvir' },
-            { name: 'Samira Rahman', text: 'Quiet mornings are underrated. So is saying nothing.', likes: 24, time: '1d', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Samira' }
+            { name: 'Ayesha K.', text: 'The best conversations happen when nobody is trying to win.', likes: 12, time: '2h' },
+            { name: 'Tanvir H.', text: 'Wrote three pages in my notebook today. No screen, just ink.', likes: 8, time: '5h' },
+            { name: 'Samira R.', text: 'Quiet mornings are underrated. So is saying nothing.', likes: 24, time: '1d' }
         ];
         for (const d of demos) {
+            const initial = d.name.charAt(0).toUpperCase();
             previewHtml += `
                 <div class="lp-post">
                     <div class="lp-post-head">
-                        <div class="lp-post-avatar has-img"><img src="${d.avatar}" alt=""></div>
+                        <div class="lp-post-avatar">${initial}</div>
                         <span class="lp-post-author">${d.name}</span>
                     </div>
                     <p class="lp-post-body">${d.text}</p>
