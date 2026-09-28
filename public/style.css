@@ -711,3 +711,87 @@ header { display: flex; justify-content: space-between; align-items: center; bor
     margin-bottom: 26px;
     letter-spacing: 0;
 }
+
+/* ===== LANDING PAGE - SCROLLABLE ===== */
+.landing-wrapper { background: #ffffff; }
+.landing-container { max-width: 600px; margin: 0 auto; padding: 0 20px; }
+
+/* Hero Section */
+.lp-hero { text-align: center; padding: 50px 20px 40px; background: linear-gradient(180deg, #ebf8ff 0%, #ffffff 100%); }
+.lp-hero-brand { margin-bottom: 20px; }
+.lp-hero-title { font-size: 2.8rem; font-weight: 900; color: #1a202c; letter-spacing: -1.5px; margin-bottom: 12px; line-height: 1.1; }
+.lp-hero-tagline { font-size: 1.1rem; color: #4a5568; font-weight: 500; margin-bottom: 8px; }
+.lp-hero-sub { font-size: 0.95rem; color: #a0aec0; margin-bottom: 32px; }
+.lp-hero-cta { display: flex; flex-direction: column; gap: 12px; max-width: 320px; margin: 0 auto; }
+.lp-btn-primary { display: block; padding: 16px 24px; background: linear-gradient(135deg, #3182ce, #2b6cb0); color: #fff; border-radius: 12px; font-size: 1rem; font-weight: 700; text-decoration: none; text-align: center; box-shadow: 0 8px 20px rgba(49,130,206,0.3); transition: all 0.15s; border: none; cursor: pointer; font-family: inherit; }
+.lp-btn-primary:active { transform: translateY(1px); box-shadow: 0 4px 10px rgba(49,130,206,0.35); }
+.lp-btn-secondary { display: block; padding: 15px 24px; background: #fff; color: #3182ce; border: 2px solid #3182ce; border-radius: 12px; font-size: 1rem; font-weight: 700; text-decoration: none; text-align: center; transition: all 0.15s; }
+
+/* Section */
+.lp-section { padding: 50px 20px; }
+.lp-section-alt { background: #f7fafc; }
+.lp-section-dark { background: #1a202c; color: #fff; }
+.lp-section-title { font-size: 1.8rem; font-weight: 800; color: #1a202c; text-align: center; margin-bottom: 12px; letter-spacing: -0.5px; line-height: 1.2; }
+.lp-section-dark .lp-section-title { color: #fff; }
+.lp-section-sub { font-size: 1rem; color: #718096; text-align: center; margin-bottom: 36px; line-height: 1.5; }
+.lp-section-dark .lp-section-sub { color: #a0aec0; }
+
+/* Problem Cards */
+.lp-problem-grid { display: flex; flex-direction: column; gap: 14px; }
+.lp-problem-card { background: #fff; border-radius: 14px; padding: 18px 20px; border-left: 4px solid #e53e3e; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.lp-problem-card h4 { font-size: 1rem; font-weight: 700; color: #1a202c; margin-bottom: 6px; }
+.lp-problem-card p { font-size: 0.9rem; color: #718096; line-height: 1.5; }
+
+/* Feature Grid */
+.lp-features { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.lp-feature { background: #fff; padding: 22px 16px; border-radius: 16px; border: 1px solid #edf2f7; text-align: center; transition: all 0.2s; }
+.lp-feature-icon { width: 48px; height: 48px; border-radius: 12px; background: #ebf8ff; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+.lp-feature-icon svg { width: 24px; height: 24px; fill: #3182ce; }
+.lp-feature h4 { font-size: 0.95rem; font-weight: 700; color: #1a202c; margin-bottom: 6px; }
+.lp-feature p { font-size: 0.8rem; color: #718096; line-height: 1.4; }
+
+/* Benefits List */
+.lp-benefit { display: flex; gap: 16px; padding: 20px 0; border-bottom: 1px solid #edf2f7; }
+.lp-benefit:last-child { border-bottom: none; }
+.lp-benefit-num { width: 36px; height: 36px; border-radius: 50%; background: #3182ce; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 800; flex-shrink: 0; }
+.lp-benefit-content h4 { font-size: 1rem; font-weight: 700; color: #1a202c; margin-bottom: 6px; }
+.lp-benefit-content p { font-size: 0.9rem; color: #718096; line-height: 1.6; }
+
+/* Steps */
+.lp-steps { display: flex; flex-direction: column; gap: 20px; }
+.lp-step { display: flex; gap: 16px; align-items: flex-start; }
+.lp-step-num { width: 40px; height: 40px; border-radius: 12px; background: #ebf8ff; color: #3182ce; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; flex-shrink: 0; }
+.lp-step-content h4 { font-size: 1rem; font-weight: 700; color: #1a202c; margin-bottom: 4px; }
+.lp-step-content p { font-size: 0.9rem; color: #718096; line-height: 1.5; }
+
+/* Comparison Table */
+.lp-compare { background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid #e2e8f0; }
+.lp-compare-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr; padding: 14px 16px; border-bottom: 1px solid #edf2f7; font-size: 0.85rem; align-items: center; }
+.lp-compare-row:last-child { border-bottom: none; }
+.lp-compare-head { background: #f7fafc; font-weight: 700; color: #1a202c; font-size: 0.85rem; }
+.lp-compare-col-feature { color: #4a5568; font-weight: 500; }
+.lp-compare-col-yes { color: #38a169; font-weight: 700; text-align: center; }
+.lp-compare-col-no { color: #e53e3e; font-weight: 700; text-align: center; }
+
+/* Quote */
+.lp-quote { text-align: center; padding: 40px 20px; }
+.lp-quote-text { font-size: 1.15rem; font-style: italic; color: #2d3748; line-height: 1.6; margin-bottom: 16px; }
+.lp-quote-author { font-size: 0.85rem; color: #a0aec0; font-weight: 600; letter-spacing: 0.5px; }
+
+/* CTA Section */
+.lp-cta-section { text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #3182ce, #1e3a8a); color: #fff; }
+.lp-cta-section h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.5px; }
+.lp-cta-section p { font-size: 1rem; opacity: 0.9; margin-bottom: 28px; line-height: 1.5; }
+.lp-cta-btn-white { display: block; max-width: 320px; margin: 0 auto; padding: 16px 24px; background: #fff; color: #3182ce; border-radius: 12px; font-size: 1rem; font-weight: 700; text-decoration: none; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+.lp-cta-btn-white:active { transform: translateY(1px); }
+.lp-cta-secondary { display: block; margin-top: 14px; font-size: 0.9rem; color: #cbd5e0; text-decoration: none; }
+.lp-cta-secondary:hover { color: #fff; }
+
+/* Footer */
+.lp-footer { text-align: center; padding: 40px 20px; background: #0f172a; color: #a0aec0; font-size: 0.85rem; }
+.lp-footer-brand { font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: -1px; margin-bottom: 8px; }
+.lp-footer-tag { font-size: 0.8rem; color: #64748b; margin-bottom: 20px; }
+.lp-footer-links { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+.lp-footer-links a { color: #a0aec0; text-decoration: none; font-size: 0.85rem; font-weight: 500; }
+.lp-footer-links a:hover { color: #fff; }
+.lp-footer-copy { color: #475569; font-size: 0.75rem; }

@@ -441,7 +441,13 @@ app.get('/', async (req, res) => {
         res.send(html);
     } else {
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
+            <html><head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="/style.css">
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+            <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
+            <title>EliGet</title>
+            </head><body>
             <div class="container">
                 <div class="landing-hero">
                     <h1 class="elget-wordmark elget-wordmark-lg" style="margin-bottom: 10px;">EliGet</h1>
