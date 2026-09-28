@@ -68,7 +68,7 @@ router.get('/', async (req, res) => {
                 let lastMsgTime = '';
                 if (lastMsg) {
                     lastMsgText = lastMsg.body;
-                    lastMsgTime = new Date(lastMsg.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                    lastMsgTime = new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 }
 
                 chatItemsHtml += `
@@ -107,7 +107,7 @@ router.get('/', async (req, res) => {
                 let lastMsgTime = '';
                 if (lastMsg) {
                     lastMsgText = `<strong class="sender">${lastMsg.from}</strong>: ${lastMsg.body}`;
-                    lastMsgTime = new Date(lastMsg.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                    lastMsgTime = new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 }
 
                 chatItemsHtml += `
