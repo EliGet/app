@@ -6,7 +6,6 @@ const Message = require('../models/Message');
 const Group = require('../models/Group');
 const GroupMessage = require('../models/GroupMessage');
 
-// Helper: Generate chat_id from two usernames (sorted)
 function getChatId(user1, user2) {
     const users = [user1.toLowerCase(), user2.toLowerCase()].sort();
     return `${users[0]}_${users[1]}`;
@@ -20,23 +19,24 @@ const icons = {
     plus: `<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>`,
     chat: `<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>`,
     profile: `<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`,
+    feed: `<svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>`,
     send: `<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:#fff"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`,
     back: `<svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>`,
     group: `<svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>`,
-    bell: `<svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>`
+    bell: `<svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>`,
+    search: `<svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>`
 };
 
 function getBottomNav(active) {
     return `<div class="bottom-nav"><a href="/" class="${active === 'home' ? 'active' : ''}">${icons.home}<span>Home</span></a><a href="/post/create" class="${active === 'post' ? 'active' : ''}">${icons.plus}<span>Post</span></a><a href="/chat" class="${active === 'chat' ? 'active' : ''}">${icons.chat}<span>Chat</span></a><a href="/profile" class="${active === 'profile' ? 'active' : ''}">${icons.profile}<span>Profile</span></a></div>`;
 }
 
-// ===== CHAT LIST =====
+// ===== CHAT LIST (with search) =====
 router.get('/', async (req, res) => {
     try {
         const me = req.session.user;
         const filter = req.query.filter || 'all';
 
-        // Get accepted friends
         const acceptedRequests = await FriendRequest.find({
             status: 'accepted',
             $or: [{ from: me }, { to: me }]
@@ -72,7 +72,7 @@ router.get('/', async (req, res) => {
                 }
 
                 chatItemsHtml += `
-                    <a href="/chat/${otherUsername}" class="chat-item">
+                    <a href="/chat/${otherUsername}" class="chat-item" data-search="${displayName.toLowerCase()} ${otherUsername.toLowerCase()}">
                         <div class="chat-avatar-wrapper">
                             <div class="chat-avatar">${avatarUrl}</div>
                             ${isUnread ? `<span class="unread-dot"></span>` : ''}
@@ -111,7 +111,7 @@ router.get('/', async (req, res) => {
                 }
 
                 chatItemsHtml += `
-                    <a href="/group/${g._id}" class="chat-item">
+                    <a href="/group/${g._id}" class="chat-item" data-search="${g.name.toLowerCase()}">
                         <div class="chat-avatar-wrapper">
                             <div class="chat-avatar">${avatarUrl}</div>
                             ${isUnread ? `<span class="unread-dot"></span>` : ''}
@@ -138,7 +138,12 @@ router.get('/', async (req, res) => {
         const pendingCount = await FriendRequest.countDocuments({ to: me, status: 'pending' });
 
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
+            <html><head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="/style.css">
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+            <title>Chats - EliGet</title>
+            </head><body>
             <div class="container">
                 <header>
                     <span class="profile-title">Chats</span>
@@ -151,14 +156,50 @@ router.get('/', async (req, res) => {
                         </a>
                     </div>
                 </header>
+
+                <div class="chat-search-wrap">
+                    <input type="text" class="chat-search-input" id="chatSearch" placeholder="Search chats..." autocomplete="off">
+                    <svg class="chat-search-icon" viewBox="0 0 24 24">${icons.search.replace('<svg viewBox="0 0 24 24">', '').replace('</svg>', '')}</svg>
+                </div>
+
                 <div class="tab-bar">
                     <a href="/chat?filter=all" class="tab-item ${filter === 'all' ? 'active' : ''}">All</a>
                     <a href="/chat?filter=groups" class="tab-item ${filter === 'groups' ? 'active' : ''}">Groups</a>
                     <a href="/chat?filter=unread" class="tab-item ${filter === 'unread' ? 'active' : ''}">Unread</a>
                 </div>
-                <div class="chat-list">${chatItemsHtml}</div>
+
+                <div class="chat-list" id="chatList">${chatItemsHtml}</div>
+                <p class="chat-search-empty" id="searchEmpty">No chats match your search.</p>
             </div>
             ${getBottomNav('chat')}
+
+            <script>
+                const searchInput = document.getElementById('chatSearch');
+                const chatList = document.getElementById('chatList');
+                const emptyMsg = document.getElementById('searchEmpty');
+
+                searchInput.addEventListener('input', function() {
+                    const query = this.value.toLowerCase().trim();
+                    const items = chatList.querySelectorAll('.chat-item');
+                    let visibleCount = 0;
+
+                    items.forEach(item => {
+                        const searchText = item.getAttribute('data-search') || '';
+                        if (query === '' || searchText.includes(query)) {
+                            item.style.display = '';
+                            visibleCount++;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+
+                    if (visibleCount === 0 && query !== '' && items.length > 0) {
+                        emptyMsg.style.display = 'block';
+                    } else {
+                        emptyMsg.style.display = 'none';
+                    }
+                });
+            </script>
             </body></html>
         `);
     } catch (error) {
@@ -171,7 +212,7 @@ router.get('/', async (req, res) => {
 router.get('/new', async (req, res) => {
     try {
         const me = req.session.user;
-        const allUsers = await User.find({ username: { $ne: me } });
+        const allUsers = await User.find({ username: { $ne: me } }).limit(20);
 
         let userItemsHtml = '';
         let hasUsers = false;
@@ -214,7 +255,12 @@ router.get('/new', async (req, res) => {
         }
 
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
+            <html><head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="/style.css">
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+            <title>Add Friends - EliGet</title>
+            </head><body>
             <div class="container">
                 <header>
                     <span class="profile-title">Add Friends</span>
@@ -306,7 +352,12 @@ router.get('/notifications', async (req, res) => {
         }
 
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
+            <html><head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="/style.css">
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+            <title>Notifications - EliGet</title>
+            </head><body>
             <div class="container">
                 <header>
                     <span class="profile-title">Notifications</span>
@@ -355,7 +406,6 @@ router.get('/:withUser', async (req, res) => {
         const initial = displayName.charAt(0).toUpperCase();
         const otherAvatarUrl = otherUser && otherUser.avatar ? `<img src="${otherUser.avatar}" alt="Avatar">` : initial;
 
-        // Mark received messages as read
         await Message.updateMany(
             { chat_id: chatId, from: withUser, read: false },
             { read: true }
@@ -392,7 +442,12 @@ router.get('/:withUser', async (req, res) => {
         }
 
         res.send(`
-            <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
+            <html><head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="/style.css">
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+            <title>${displayName} - EliGet</title>
+            </head><body>
             <div class="container">
                 <header>
                     <span class="profile-title">${displayName}</span>

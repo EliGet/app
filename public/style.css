@@ -920,3 +920,11 @@ header { display: flex; justify-content: space-between; align-items: center; bor
 .reply-form button { width: 44px; height: 44px; padding: 0; background: #3182ce; color: #fff; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
 .reply-form button:hover { background: #2b6cb0; }
 .reply-form button svg { width: 20px; height: 20px; fill: #fff; margin-left: -2px; }
+
+/* ===== Chat Search Bar ===== */
+.chat-search-wrap { position: relative; margin-bottom: 16px; }
+.chat-search-input { width: 100%; padding: 12px 16px 12px 42px; background: #f0f2f5; border: 1.5px solid transparent; border-radius: 12px; font-size: 0.95rem; outline: none; transition: all 0.2s; font-family: inherit; color: #1a202c; }
+.chat-search-input::placeholder { color: #a0aec0; }
+.chat-search-input:focus { background: #ffffff; border-color: #3182ce; box-shadow: 0 0 0 3px rgba(49,130,206,0.1); }
+.chat-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; fill: #a0aec0; pointer-events: none; }
+.chat-search-empty { text-align: center; padding: 30px 20px; color: #a0aec0; font-size: 0.9rem; display: none; }
