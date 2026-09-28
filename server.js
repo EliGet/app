@@ -681,7 +681,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
                     <p class="pp-username">@${user.username}</p>
                     ${bioHtml}
 
-                    <p class="pp-stats-line"><strong>${postCount}</strong> Posts <span class="pp-dot">·</span> <strong>${totalLikes}</strong> Likes</p>
+                    <p class="pp-stats-line"><strong>${postCount}</strong> ${postCount === 1 ? 'Post' : 'Posts'} <span class="pp-dot">·</span> <strong>${totalLikes}</strong> ${totalLikes === 1 ? 'Like' : 'Likes'}</p>
                 </div>
 
                 <div class="pp-section-title">Your Posts</div>
@@ -1103,11 +1103,11 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
                     <div class="pp-stats">
                         <div class="pp-stat">
                             <div class="pp-stat-num">${postCount}</div>
-                            <div class="pp-stat-label">Posts</div>
+                            <div class="pp-stat-label">${postCount === 1 ? 'Post' : 'Posts'}</div>
                         </div>
                         <div class="pp-stat">
                             <div class="pp-stat-num">${friendCount}</div>
-                            <div class="pp-stat-label">Friends</div>
+                            <div class="pp-stat-label">${friendCount === 1 ? 'Friend' : 'Friends'}</div>
                         </div>
                     </div>
 
