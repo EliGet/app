@@ -2,18 +2,6 @@ const connectDB = require('./db');
 const express = require('express');
 const session = require('express-session');
 const app = express();
-
-// Inject love.js into every HTML response
-app.use((req, res, next) => {
-    const _send = res.send.bind(res);
-    res.send = function(body) {
-        if (typeof body === 'string' && body.includes('</body>') && !body.includes('/love.js')) {
-            body = body.replace('</body>', '<script src="/love.js"></script></body>');
-        }
-        return _send(body);
-    };
-    next();
-});
 const PORT = process.env.PORT || 3000;
 const path = require('path');
 
@@ -85,7 +73,7 @@ const icons = {
     profile: `<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`,
     feed: `<svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>`,
     settings: `<svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>`,
-    back: `<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>`,
+    back: `<svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>`,
     check: `<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#68d391"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`,
     send: `<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:#fff"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`
 };
@@ -335,9 +323,6 @@ async function renderPostCard(p, currentUser) {
         moodSvg = moodIcons[p.mood] || '';
     }
 
-    const likeCount = (p.likes || []).length;
-    const liked = currentUser && (p.likes || []).includes(currentUser);
-
     let menuHtml = '';
     if (currentUser && currentUser === p.author) {
         menuHtml = `
@@ -381,33 +366,13 @@ async function renderPostCard(p, currentUser) {
             </div>
             <div class="post-content">${p.body}</div>
             ${imageHtml}
-            <div class="post-love-row">
-                <button type="button" class="post-love-btn ${liked ? 'liked' : ''}" data-post-id="${p._id}" onclick="toggleLove(event, this)">
-                    <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    <span class="post-love-count">${likeCount}</span>
-                </button>
-            </div>
+            <a href="/post/${p._id}" class="post-reply-link">
+                <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+                ${p.replies && p.replies.length > 0 ? p.replies.length + ' ' + (p.replies.length === 1 ? 'reply' : 'replies') : 'Reply'}
+            </a>
         </div>
     `;
 }
-
-// ===== LIKE POST (toggle) =====
-app.post('/post/:id/like', isAuthenticated, async (req, res) => {
-    try {
-        const post = await Post.findById(req.params.id);
-        if (!post) return res.json({ ok: false });
-        if (!post.likes) post.likes = [];
-        const me = req.session.user;
-        const idx = post.likes.indexOf(me);
-        if (idx === -1) post.likes.push(me);
-        else post.likes.splice(idx, 1);
-        await post.save();
-        res.json({ ok: true, likes: post.likes.length, liked: post.likes.includes(me) });
-    } catch (err) {
-        console.error('Like error:', err);
-        res.json({ ok: false });
-    }
-});
 
 function getDeleteModal() {
     return `
@@ -557,6 +522,122 @@ app.get('/feed', async (req, res) => {
     res.send(html);
 });
 
+// ===== POST DETAIL (with replies) =====
+app.get('/post/:id', isAuthenticated, async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.redirect('/');
+
+        const author = await User.findOne({ username: post.author });
+        const displayName = author ? (author.full_name || author.username) : post.author;
+        const initial = displayName.charAt(0).toUpperCase();
+        const avatarUrl = author && author.avatar ? `<img src="${author.avatar}" alt="Avatar">` : initial;
+
+        let moodSvg = '';
+        if (post.mood && post.mood !== 'none') {
+            moodSvg = moodIcons[post.mood] || '';
+        }
+
+        const editedLabel = post.edited ? ' <span style="font-size:0.7rem;color:#a0aec0;font-weight:400;">(edited)</span>' : '';
+
+        // Post body
+        let postHtml = `
+            <div class="post-detail">
+                <div class="post-header">
+                    <a href="/profile/${post.author}" class="post-avatar-link"><div class="post-avatar">${avatarUrl}</div></a>
+                    <div class="post-user-info">
+                        <div class="post-author-row">
+                            <a href="/profile/${post.author}" class="post-author-link"><span class="post-author-name">${displayName}${editedLabel}</span></a>
+                            ${moodSvg ? `<span class="post-mood" style="fill:#3182ce">${moodSvg}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="post-detail-body">${post.body}</div>
+            </div>
+        `;
+
+        // Replies
+        let repliesHtml = '';
+        if (post.replies.length === 0) {
+            repliesHtml = '<p class="reply-empty">No replies yet. Be the first!</p>';
+        } else {
+            for (const r of post.replies) {
+                const rAuthor = await User.findOne({ username: r.author });
+                const rName = rAuthor ? (rAuthor.full_name || rAuthor.username) : r.author;
+                const rInitial = rName.charAt(0).toUpperCase();
+                const rAvatar = rAuthor && rAuthor.avatar ? `<img src="${rAuthor.avatar}" alt="Avatar">` : rInitial;
+
+                repliesHtml += `
+                    <div class="reply-item">
+                        <a href="/profile/${r.author}" class="reply-avatar-link">
+                            <div class="reply-avatar">${rAvatar}</div>
+                        </a>
+                        <div class="reply-content">
+                            <div class="reply-author">${rName}</div>
+                            <div class="reply-body">${r.body}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        const bottomNav = `<div class="bottom-nav"><a href="/" class="active">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile">${icons.profile}<span>Profile</span></a></div>`;
+
+        res.send(`
+            <html><head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="/style.css">
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+            <title>Post - EliGet</title>
+            </head><body>
+            <div class="container">
+                <header>
+                    <span class="profile-title">Post</span>
+                    <a href="/" class="header-icon" title="Back">${icons.back}</a>
+                </header>
+
+                ${postHtml}
+
+                <div class="pp-section-title" style="margin-top: 24px;">${post.replies.length} ${post.replies.length === 1 ? 'Reply' : 'Replies'}</div>
+
+                <div class="replies-list">${repliesHtml}</div>
+
+                <form class="reply-form" action="/post/${post._id}/reply" method="POST">
+                    <input type="text" name="body" required maxlength="200" placeholder="Write a reply..." autocomplete="off">
+                    <button type="submit" title="Reply">${icons.send}</button>
+                </form>
+            </div>
+            ${bottomNav}
+            </body></html>
+        `);
+    } catch (err) {
+        console.error('Post detail error:', err);
+        res.redirect('/');
+    }
+});
+
+// ===== ADD REPLY =====
+app.post('/post/:id/reply', isAuthenticated, async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.redirect('/');
+
+        const body = req.body.body.trim();
+        if (!body) return res.redirect('/post/' + req.params.id);
+
+        post.replies.push({
+            author: req.session.user,
+            body: body
+        });
+        await post.save();
+
+        res.redirect('/post/' + req.params.id);
+    } catch (err) {
+        console.error('Reply error:', err);
+        res.redirect('/');
+    }
+});
+
 // ===== OWN PROFILE =====
 app.get('/profile', isAuthenticated, async (req, res) => {
     try {
@@ -569,7 +650,6 @@ app.get('/profile', isAuthenticated, async (req, res) => {
 
         const myPosts = await Post.find({ author: req.session.user }).sort({ created_at: -1 });
         const postCount = myPosts.length;
-        const totalLikes = myPosts.reduce((sum, p) => sum + ((p.likes || []).length), 0);
 
         const FriendRequest = require('./models/FriendRequest');
         const friendCount = await FriendRequest.countDocuments({
@@ -641,7 +721,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
                     <p class="pp-username">@${user.username}</p>
                     ${bioHtml}
 
-                    <p class="pp-stats-line"><strong>${postCount}</strong> Posts <span class="pp-dot">·</span> <strong>${totalLikes}</strong> Likes</p>
+                    <p class="pp-stats-line"><strong>${postCount}</strong> Posts <span class="pp-dot">·</span> <strong>${friendCount}</strong> Friends</p>
                 </div>
 
                 <div class="pp-section-title">Your Posts</div>
@@ -789,8 +869,8 @@ app.get('/profile/avatar', isAuthenticated, async (req, res) => {
         <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
         <div class="container">
             <header>
+                <span class="profile-title">Choose Avatar</span>
                 <a href="/profile" class="header-icon" title="Back">${icons.back}</a>
-                <span class="profile-title" style="flex:1;">Choose Avatar</span>
             </header>
             <p style="color: #718096; font-size: 0.9rem; margin-bottom: 15px; text-align: center;">Pick any avatar you like</p>
             <div class="avatar-library-grid">
@@ -838,8 +918,8 @@ app.get('/profile/badges', isAuthenticated, async (req, res) => {
         </head><body>
         <div class="container">
             <header>
+                <span class="profile-title">Badge Library</span>
                 <a href="/profile" class="header-icon" title="Back">${icons.back}</a>
-                <span class="profile-title" style="flex:1;">Badge Library</span>
             </header>
 
             <p style="color: #718096; font-size: 0.9rem; margin-bottom: 15px; text-align: center;">Select up to 3 badges for your profile</p>
@@ -912,8 +992,8 @@ app.get('/profile/bio', isAuthenticated, async (req, res) => {
         </head><body>
         <div class="container">
             <header>
+                <span class="profile-title">Edit Bio</span>
                 <a href="/profile" class="header-icon" title="Back">${icons.back}</a>
-                <span class="profile-title" style="flex:1;">Edit Bio</span>
             </header>
 
             <div class="form-card">
@@ -1046,8 +1126,8 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
             </head><body>
             <div class="container">
                 <header>
+                    <span class="profile-title">Profile</span>
                     <a href="/" class="header-icon" title="Back">${icons.back}</a>
-                    <span class="profile-title" style="flex:1;">Profile</span>
                 </header>
 
                 <div class="pp-card">
@@ -1095,7 +1175,7 @@ app.get('/settings', isAuthenticated, async (req, res) => {
         <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
         ${showToast ? `<div class="toast">${icons.check} Saved successfully!</div>` : ''}
         <div class="container">
-            <header><a href="/profile" class="header-icon" title="Back">${icons.back}</a><span class="settings-page-title" style="flex:1;">Settings</span></header>
+            <header><span class="settings-page-title">Settings</span><a href="/profile" class="header-icon" title="Back">${icons.back}</a></header>
             <div class="settings-card">
                 <div class="settings-card-header"><h3 class="settings-card-title">Edit Profile</h3></div>
                 <div class="settings-row">

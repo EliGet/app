@@ -1,0 +1,130 @@
+// ===== OWN PROFILE =====
+app.get('/profile', isAuthenticated, async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.session.user });
+        if (!user) return res.redirect('/auth/logout');
+
+        const displayName = user.full_name || user.username;
+        const initial = displayName.charAt(0).toUpperCase();
+        const avatarUrl = user.avatar ? `<img src="${user.avatar}" alt="Avatar">` : initial;
+
+        const myPosts = await Post.find({ author: req.session.user }).sort({ created_at: -1 });
+        const postCount = myPosts.length;
+
+        const FriendRequest = require('./models/FriendRequest');
+        const friendCount = await FriendRequest.countDocuments({
+            status: 'accepted',
+            $or: [{ from: req.session.user }, { to: req.session.user }]
+        });
+
+        let postsHtml = '';
+        if (myPosts.length === 0) {
+            postsHtml = `<div class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h10v2H7zm0 4h7v2H7z"/></svg>
+                <p>You have not posted anything yet.</p>
+                <a href="/post/create">Write your first post</a>
+            </div>`;
+        } else {
+            for (const p of myPosts) {
+                postsHtml += await renderPostCard(p, req.session.user);
+            }
+        }
+
+        let bioHtml = '';
+        if (user.bio && user.bio.trim()) {
+            bioHtml = `<p class="pp-bio">${user.bio}</p>`;
+        }
+
+        let badgesInline = '';
+        if (user.badges && user.badges.length > 0) {
+            user.badges.forEach(b => {
+                if (badgeLibrary[b]) {
+                    badgesInline += `<span class="pp-badge pp-badge-inline" title="${badgeLibrary[b].label}">${badgeLibrary[b].svg}</span>`;
+                }
+            });
+        }
+
+        const bottomNav = `<div class="bottom-nav"><a href="/">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile" class="active">${icons.profile}<span>Profile</span></a></div>`;
+
+        res.send(`
+            <html><head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="/style.css">
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+            <title>Your Profile - EliGet</title>
+            </head><body>
+            <div class="container">
+                <header>
+                    <span class="profile-title">Your Profile</span>
+                    <a href="/settings" class="settings-icon" title="Settings">${icons.settings}</a>
+                </header>
+
+                <div class="pp-card">
+                    <button type="button" class="pp-menu-btn" onclick="toggleProfileMenu(event)" aria-label="Menu">
+                        <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                    </button>
+                    <div class="pp-menu-dropdown" id="ownProfileMenu">
+                        <a href="#" onclick="openChangeNameModal();return false;">Change Name</a>
+                        <a href="/profile/avatar">Edit Avatar</a>
+                        <a href="/profile/badges">Edit Badges</a>
+                        <a href="/profile/bio">Edit Bio</a>
+                    </div>
+
+                    <div class="pp-avatar-wrap">
+                        <div class="pp-avatar">${avatarUrl}</div>
+                    </div>
+
+                    <div class="pp-name-row">
+                        <h2 class="pp-name">${displayName}</h2>
+                        ${badgesInline}
+                    </div>
+                    <p class="pp-username">@${user.username}</p>
+                    ${bioHtml}
+
+                    <p class="pp-stats-line"><strong>${postCount}</strong> Posts <span class="pp-dot">·</span> <strong>${friendCount}</strong> Friends</p>
+                </div>
+
+                <div class="pp-section-title">Your Posts</div>
+                ${postsHtml}
+            </div>
+
+            <div class="modal-overlay" id="changeNameModal">
+                <div class="modal-box">
+                    <h3 class="modal-title">Change Name</h3>
+                    <form method="POST" action="/settings/update-name">
+                        <input type="hidden" name="redirect" value="/profile">
+                        <input type="text" name="full_name" value="${displayName.replace(/"/g, '&quot;')}" required maxlength="50" placeholder="Enter your name">
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="closeModal('changeNameModal')">Cancel</button>
+                            <button type="submit" class="btn-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <script>
+                function toggleProfileMenu(e){
+                    e.stopPropagation();
+                    document.getElementById('ownProfileMenu').classList.toggle('open');
+                }
+                function openChangeNameModal(){
+                    document.getElementById('ownProfileMenu').classList.remove('open');
+                    document.getElementById('changeNameModal').classList.add('active');
+                }
+                function closeModal(id){
+                    document.getElementById(id).classList.remove('active');
+                }
+                document.addEventListener('click', function(e){
+                    var menu = document.getElementById('ownProfileMenu');
+                    if (menu && !menu.contains(e.target)) menu.classList.remove('open');
+                });
+            </script>
+            ${bottomNav}
+            </body></html>
+        `);
+    } catch (err) {
+        console.error('Own profile error:', err);
+        res.redirect('/');
+    }
+});
+
