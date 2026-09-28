@@ -274,151 +274,142 @@ router.get('/recover', (req, res) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="/style.css">
         <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
-        <title>Reset Password - EliGet</title>
-        </head><body class="au-body">
-        <div class="au-wrap">
+        <title>Recover Password - EliGet</title>
+        </head><body>
+        <div class="auth-page">
+            <div class="auth-topbar">
+                <a href="/auth/login" class="auth-back-icon" title="Back">${icons.back}</a>
+            </div>
 
-            <header class="au-topbar">
-                <a href="/auth/login" class="au-back" title="Back">${icons.back}</a>
-                <span class="au-brand">EliGet</span>
-                <span class="au-spacer"></span>
-            </header>
-
-            <div class="au-card">
-                <div class="au-head">
-                    <h1 class="au-title" id="au-head-title">Reset password</h1>
-                    <p class="au-sub" id="au-head-sub">Enter your username and a recovery code.</p>
+            <div class="auth-card">
+                <div class="auth-brand">
+                    <p class="auth-welcome-to">Reset your password</p>
+                    <h1 class="elget-wordmark elget-wordmark-lg" style="margin: 0;">EliGet</h1>
+                    <p class="auth-tagline">Recover your account</p>
                 </div>
 
-                <div class="au-error" id="au-error" style="display:none;"></div>
+                <form id="recoverForm" onsubmit="return false;">
+                    <div class="auth-field">
+                        <label>Username</label>
+                        <input type="text" id="username" required placeholder="Your username" autocomplete="username">
+                    </div>
+                    <div class="auth-field">
+                        <label>Recovery Code</label>
+                        <input type="text" id="recoveryCode" required placeholder="ELI-XXXX-XXXX" autocomplete="off">
+                    </div>
+                    <button type="button" id="verifyBtn" class="auth-submit" onclick="verifyCode()">Next</button>
+                </form>
 
-                <!-- Step 1: verify -->
-                <div id="step-verify">
-                    <div class="au-field">
-                        <label for="au-username">Username</label>
-                        <input id="au-username" type="text" placeholder="your username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false">
+                <div id="passwordSection" style="display: none;">
+                    <div class="auth-divider">Verified</div>
+                    <div class="auth-field">
+                        <label>New Password</label>
+                        <input type="password" id="newPassword" required placeholder="Min 6 characters" autocomplete="new-password">
                     </div>
-                    <div class="au-field">
-                        <label for="au-code">Recovery code</label>
-                        <input id="au-code" type="text" placeholder="ELI-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" style="letter-spacing: 0.8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">
-                    </div>
-                    <button type="button" id="au-next" class="au-submit">
-                        Continue
-                        <svg class="au-arrow" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button>
+                    <button type="button" id="updateBtn" class="auth-submit" onclick="updatePassword()">Update Password</button>
                 </div>
 
-                <!-- Step 2: reset -->
-                <div id="step-reset" style="display:none;">
-                    <div class="au-verified">
-                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="#16a34a"/></svg>
-                        Verified
-                    </div>
-                    <div class="au-field">
-                        <label for="au-newpass">New password</label>
-                        <input id="au-newpass" type="password" placeholder="At least 6 characters" autocomplete="new-password" minlength="6">
-                    </div>
-                    <button type="button" id="au-update" class="au-submit">
-                        Update password
-                        <svg class="au-arrow" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button>
-                </div>
-
-                <div class="au-switch">
+                <div class="auth-switch">
                     Remember password? <a href="/auth/login">Login</a>
                 </div>
             </div>
-
         </div>
+
         <script>
-            var errBox = document.getElementById('au-error');
-            function showErr(msg) {
-                errBox.textContent = msg;
-                errBox.style.display = 'block';
+            function showToast(msg, type) {
+                const existing = document.querySelector('.toast');
+                if (existing) existing.remove();
+
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                if (type === 'error') {
+                    toast.style.background = '#e53e3e';
+                } else if (type === 'success') {
+                    toast.style.background = '#1a202c';
+                }
+                toast.textContent = msg;
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    if (toast.parentNode) toast.remove();
+                }, 3000);
             }
-            function hideErr() { errBox.style.display = 'none'; }
 
             function verifyCode() {
-                var username = document.getElementById('au-username').value.trim();
-                var code = document.getElementById('au-code').value.trim();
-                hideErr();
-                if (!username || !code) { showErr('Please fill both fields.'); return; }
+                const username = document.getElementById('username').value.trim();
+                const code = document.getElementById('recoveryCode').value.trim();
 
-                var btn = document.getElementById('au-next');
+                if (!username || !code) {
+                    showToast('Please fill both fields', 'error');
+                    return;
+                }
+
+                const btn = document.getElementById('verifyBtn');
                 btn.disabled = true;
-                btn.innerHTML = 'Verifying\u2026';
+                btn.textContent = 'Verifying...';
 
                 fetch('/auth/recover/verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ username: username, code: code })
+                    body: JSON.stringify({ username, code })
                 })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
+                .then(r => r.json())
+                .then(data => {
                     if (data.success) {
-                        document.getElementById('step-verify').style.display = 'none';
-                        document.getElementById('step-reset').style.display = 'block';
-                        document.getElementById('au-head-title').textContent = 'Set a new password';
-                        document.getElementById('au-head-sub').textContent = 'Choose something you will remember.';
-                        document.getElementById('au-newpass').focus();
+                        showToast('Verified!', 'success');
+                        document.getElementById('passwordSection').style.display = 'block';
+                        document.getElementById('username').disabled = true;
+                        document.getElementById('recoveryCode').disabled = true;
+                        btn.style.display = 'none';
                     } else {
-                        showErr('Username or code is incorrect.');
+                        showToast('Not verified', 'error');
                         btn.disabled = false;
-                        btn.innerHTML = 'Continue <svg class="au-arrow" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                        btn.textContent = 'Next';
                     }
                 })
-                .catch(function() {
-                    showErr('Verification failed. Try again.');
+                .catch(() => {
+                    showToast('Not verified', 'error');
                     btn.disabled = false;
-                    btn.innerHTML = 'Continue';
+                    btn.textContent = 'Next';
                 });
             }
 
             function updatePassword() {
-                var pw = document.getElementById('au-newpass').value;
-                hideErr();
-                if (!pw || pw.length < 6) { showErr('Password must be at least 6 characters.'); return; }
+                const newPassword = document.getElementById('newPassword').value;
 
-                var btn = document.getElementById('au-update');
+                if (!newPassword || newPassword.length < 6) {
+                    showToast('Password min 6 characters', 'error');
+                    return;
+                }
+
+                const btn = document.getElementById('updateBtn');
                 btn.disabled = true;
-                btn.innerHTML = 'Updating\u2026';
+                btn.textContent = 'Updating...';
 
                 fetch('/auth/recover/reset', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ new_password: pw })
+                    body: JSON.stringify({ new_password: newPassword })
                 })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
+                .then(r => r.json())
+                .then(data => {
                     if (data.success) {
-                        document.getElementById('au-head-title').textContent = 'Password updated';
-                        document.getElementById('au-head-sub').textContent = 'Redirecting to login\u2026';
-                        document.getElementById('step-reset').style.display = 'none';
-                        setTimeout(function() { window.location.href = '/auth/login'; }, 1400);
+                        showToast('Password updated!', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/auth/login';
+                        }, 1800);
                     } else {
-                        showErr('Update failed. Try again.');
+                        showToast('Update failed. Try again', 'error');
                         btn.disabled = false;
-                        btn.innerHTML = 'Update password';
+                        btn.textContent = 'Update Password';
                     }
                 })
-                .catch(function() {
-                    showErr('Update failed. Try again.');
+                .catch(() => {
+                    showToast('Update failed. Try again', 'error');
                     btn.disabled = false;
-                    btn.innerHTML = 'Update password';
+                    btn.textContent = 'Update Password';
                 });
             }
-
-            document.getElementById('au-next').addEventListener('click', verifyCode);
-            document.getElementById('au-update').addEventListener('click', updatePassword);
-            document.getElementById('au-code').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') { e.preventDefault(); verifyCode(); }
-            });
-            document.getElementById('au-newpass').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') { e.preventDefault(); updatePassword(); }
-            });
         </script>
         </body></html>
     `);

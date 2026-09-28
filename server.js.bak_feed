@@ -338,15 +338,6 @@ async function renderPostCard(p, currentUser) {
     const likeCount = (p.likes || []).length;
     const liked = currentUser && (p.likes || []).includes(currentUser);
 
-    const diffMs = Date.now() - new Date(p.created_at).getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-    let timeStr;
-    if (diffMin < 1) timeStr = 'just now';
-    else if (diffMin < 60) timeStr = diffMin + 'm';
-    else if (diffMin < 1440) timeStr = Math.floor(diffMin / 60) + 'h';
-    else if (diffMin < 10080) timeStr = Math.floor(diffMin / 1440) + 'd';
-    else timeStr = new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-
     let menuHtml = '';
     if (currentUser && currentUser === p.author) {
         menuHtml = `
@@ -368,6 +359,8 @@ async function renderPostCard(p, currentUser) {
         `;
     }
 
+    const editedLabel = p.edited ? ' <span style="font-size:0.7rem;color:#a0aec0;font-weight:400;">(edited)</span>' : '';
+
     // Post Image (Emotional Scene)
     let imageHtml = '';
     if (p.image && p.image !== 'none' && postImagesMap[p.image]) {
@@ -380,12 +373,8 @@ async function renderPostCard(p, currentUser) {
                 <a href="/profile/${p.author}" class="post-avatar-link"><div class="post-avatar">${avatarUrl}</div></a>
                 <div class="post-user-info">
                     <div class="post-author-row">
-                        <a href="/profile/${p.author}" class="post-author-link"><span class="post-author-name">${displayName}</span></a>
-                        ${moodSvg ? `<span class="post-mood">${moodSvg}</span>` : ''}
-                    </div>
-                    <div class="post-meta-row">
-                        <span class="post-time">${timeStr}</span>
-                        ${p.edited ? `<span class="post-meta-dot">\u00b7</span><span class="post-edited">edited</span>` : ''}
+                        <a href="/profile/${p.author}" class="post-author-link"><span class="post-author-name">${displayName}${editedLabel}</span></a>
+                        ${moodSvg ? `<span class="post-mood" style="fill:#3182ce">${moodSvg}</span>` : ''}
                     </div>
                 </div>
                 ${menuHtml}
@@ -477,7 +466,7 @@ app.get('/', async (req, res) => {
     if (req.session.user) {
         const posts = await Post.find().sort({ created_at: -1 }).limit(50);
         let html = '<html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body><div class="container">';
-        html += '<header class="feed-header"><h1 class="feed-title">Feed</h1></header>';
+        html += '<header><h1 class="feed-title">EliGet Feed</h1></header>';
         
         if (posts.length === 0) {
             html += '<p style="text-align:center; color:#a0aec0; padding:20px;">No posts yet. Be the first to post!</p>';
@@ -577,7 +566,7 @@ app.get('/', async (req, res) => {
 app.get('/feed', async (req, res) => {
     const posts = await Post.find().sort({ created_at: -1 }).limit(50);
     let html = '<html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body><div class="container">';
-    html += '<header class="feed-header"><h1 class="feed-title">Feed</h1></header>';
+    html += '<header><h1 class="feed-title">Feed</h1></header>';
     
     if (posts.length === 0) {
         html += '<p style="text-align:center; color:#a0aec0; padding:20px;">No posts yet.</p>';
