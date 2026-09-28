@@ -196,7 +196,7 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-// ===== FORGOT PASSWORD (Placeholder) =====
+// ===== RECOVER PASSWORD =====
 router.get('/recover', (req, res) => {
     res.send(`
         <html><head>
@@ -209,77 +209,198 @@ router.get('/recover', (req, res) => {
             <div class="auth-topbar">
                 <a href="/auth/login" class="auth-back-icon" title="Back">${icons.back}</a>
             </div>
+
             <div class="auth-card">
                 <div class="auth-brand">
-                    <h1 class="elget-wordmark elget-wordmark-md" style="margin: 0;">EliGet</h1>
+                    <p class="auth-welcome-to">Reset your password</p>
+                    <h1 class="elget-wordmark elget-wordmark-lg" style="margin: 0;">EliGet</h1>
+                    <p class="auth-tagline">Recover your account</p>
                 </div>
-                <h2 class="auth-heading">Recover Password</h2>
-                <p class="auth-subtitle">Enter your username and one recovery code to reset password.</p>
 
-                <form action="/auth/recover" method="POST">
+                <form id="recoverForm" onsubmit="return false;">
                     <div class="auth-field">
                         <label>Username</label>
-                        <input type="text" name="username" required placeholder="Your username">
+                        <input type="text" id="username" required placeholder="Your username" autocomplete="username">
                     </div>
                     <div class="auth-field">
                         <label>Recovery Code</label>
-                        <input type="text" name="code" required placeholder="ELI-XXXX-XXXX">
+                        <input type="text" id="recoveryCode" required placeholder="ELI-XXXX-XXXX" autocomplete="off">
                     </div>
+                    <button type="button" id="verifyBtn" class="auth-submit" onclick="verifyCode()">Next</button>
+                </form>
+
+                <div id="passwordSection" style="display: none;">
+                    <div class="auth-divider">Verified</div>
                     <div class="auth-field">
                         <label>New Password</label>
-                        <input type="password" name="new_password" required placeholder="New password">
+                        <input type="password" id="newPassword" required placeholder="Min 6 characters" autocomplete="new-password">
                     </div>
-                    <button type="submit" class="auth-submit">Reset Password</button>
-                </form>
+                    <button type="button" id="updateBtn" class="auth-submit" onclick="updatePassword()">Update Password</button>
+                </div>
 
                 <div class="auth-switch">
                     Remember password? <a href="/auth/login">Login</a>
                 </div>
             </div>
         </div>
+
+        <script>
+            function showToast(msg, type) {
+                const existing = document.querySelector('.toast');
+                if (existing) existing.remove();
+
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                if (type === 'error') {
+                    toast.style.background = '#e53e3e';
+                } else if (type === 'success') {
+                    toast.style.background = '#1a202c';
+                }
+                toast.textContent = msg;
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    if (toast.parentNode) toast.remove();
+                }, 3000);
+            }
+
+            function verifyCode() {
+                const username = document.getElementById('username').value.trim();
+                const code = document.getElementById('recoveryCode').value.trim();
+
+                if (!username || !code) {
+                    showToast('Please fill both fields', 'error');
+                    return;
+                }
+
+                const btn = document.getElementById('verifyBtn');
+                btn.disabled = true;
+                btn.textContent = 'Verifying...';
+
+                fetch('/auth/recover/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, code })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Verified!', 'success');
+                        document.getElementById('passwordSection').style.display = 'block';
+                        document.getElementById('username').disabled = true;
+                        document.getElementById('recoveryCode').disabled = true;
+                        btn.style.display = 'none';
+                    } else {
+                        showToast('Not verified', 'error');
+                        btn.disabled = false;
+                        btn.textContent = 'Next';
+                    }
+                })
+                .catch(() => {
+                    showToast('Not verified', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Next';
+                });
+            }
+
+            function updatePassword() {
+                const newPassword = document.getElementById('newPassword').value;
+
+                if (!newPassword || newPassword.length < 6) {
+                    showToast('Password min 6 characters', 'error');
+                    return;
+                }
+
+                const btn = document.getElementById('updateBtn');
+                btn.disabled = true;
+                btn.textContent = 'Updating...';
+
+                fetch('/auth/recover/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_password: newPassword })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Password updated!', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/auth/login';
+                        }, 1800);
+                    } else {
+                        showToast('Update failed. Try again', 'error');
+                        btn.disabled = false;
+                        btn.textContent = 'Update Password';
+                    }
+                })
+                .catch(() => {
+                    showToast('Update failed. Try again', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Update Password';
+                });
+            }
+        </script>
         </body></html>
     `);
 });
 
-router.post('/recover', async (req, res) => {
+// ===== VERIFY RECOVERY CODE (AJAX) =====
+router.post('/recover/verify', async (req, res) => {
     try {
-        const { username, code, new_password } = req.body;
+        const { username, code } = req.body;
         const user = await User.findOne({ username });
-        if (!user) return res.send('User not found. <a href="/auth/recover">Try again</a>');
+
+        if (!user) return res.json({ success: false });
 
         let matched = false;
         for (const rc of user.recovery_codes) {
             if (!rc.used && await bcrypt.compare(code, rc.hash)) {
-                rc.used = true;
                 matched = true;
+                req.session.recoverUser = username;
+                req.session.recoverCodeHash = rc.hash;
                 break;
             }
         }
 
-        if (!matched) return res.send('Invalid or used code. <a href="/auth/recover">Try again</a>');
+        res.json({ success: matched });
+    } catch (err) {
+        console.error('Recover verify error:', err);
+        res.json({ success: false });
+    }
+});
+
+// ===== RESET PASSWORD (AJAX) =====
+router.post('/recover/reset', async (req, res) => {
+    try {
+        const username = req.session.recoverUser;
+        const codeHash = req.session.recoverCodeHash;
+        const { new_password } = req.body;
+
+        if (!username || !codeHash) return res.json({ success: false });
+        if (!new_password || new_password.length < 6) return res.json({ success: false });
+
+        const user = await User.findOne({ username });
+        if (!user) return res.json({ success: false });
+
+        // Mark the used recovery code
+        for (const rc of user.recovery_codes) {
+            if (rc.hash === codeHash && !rc.used) {
+                rc.used = true;
+                break;
+            }
+        }
 
         user.password_hash = await bcrypt.hash(new_password, 10);
         await user.save();
 
-        res.send(`
-            <html><head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <link rel="stylesheet" href="/style.css">
-            <title>Password Reset - EliGet</title>
-            </head><body>
-            <div class="auth-page">
-                <div class="auth-card">
-                    <div style="text-align: center;">${icons.check}</div>
-                    <h2 class="auth-heading" style="color: #38a169;">Password Reset!</h2>
-                    <p class="auth-subtitle">Your password has been changed. Login with your new password.</p>
-                    <a href="/auth/login" class="auth-submit" style="display:block; text-decoration:none; text-align:center;">Login</a>
-                </div>
-            </div>
-            </body></html>
-        `);
-    } catch (error) {
-        console.error('Recover error:', error);
-        res.send('Something went wrong. <a href="/auth/recover">Try again</a>');
+        // Clear session recover data
+        delete req.session.recoverUser;
+        delete req.session.recoverCodeHash;
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Recover reset error:', err);
+        res.json({ success: false });
     }
 });
 
