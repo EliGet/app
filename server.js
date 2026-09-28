@@ -18,6 +18,7 @@ const postRoutes = require('./routes/post');
 const chatRoutes = require('./routes/chat');
 const groupRoutes = require('./routes/group');
 const wapRoutes = require('./routes/wap');
+const { badges: badgeLibrary } = require('./public/badges.js');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -353,10 +354,10 @@ async function renderPostCard(p, currentUser) {
     return `
         <div class="post-card">
             <div class="post-header">
-                <div class="post-avatar">${avatarUrl}</div>
+                <a href="/profile/${p.author}" class="post-avatar-link"><div class="post-avatar">${avatarUrl}</div></a>
                 <div class="post-user-info">
                     <div class="post-author-row">
-                        <span class="post-author-name">${displayName}${editedLabel}</span>
+                        <a href="/profile/${p.author}" class="post-author-link"><span class="post-author-name">${displayName}${editedLabel}</span></a>
                         ${moodSvg ? `<span class="post-mood" style="fill:#3182ce">${moodSvg}</span>` : ''}
                     </div>
                 </div>
@@ -550,7 +551,12 @@ app.get('/profile', isAuthenticated, async (req, res) => {
                 <div class="profile-avatar">${avatarUrl}</div>
                 <h2>${displayName}</h2>
                 <p>@${user.username}</p>
-                <a href="/profile/avatar" class="edit-avatar-btn">Change Avatar</a>
+                ${user.badges && user.badges.length > 0 ? `<div class="pp-badges">${user.badges.map(b => badgeLibrary[b] ? `<span class="pp-badge">${badgeLibrary[b].svg}</span>` : '').join('')}</div>` : ''}
+                ${user.bio && user.bio.trim() ? `<p class="pp-bio">${user.bio}</p>` : ''}
+                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <a href="/profile/avatar" class="edit-avatar-btn">Change Avatar</a>
+                    <a href="/profile/badges" class="edit-avatar-btn">Manage Badges</a>
+                </div>
             </div>
             <div class="section-title">Your Posts</div>
             ${postsHtml}
@@ -684,6 +690,237 @@ app.post('/profile/avatar', isAuthenticated, async (req, res) => {
 });
 
 // ===== SETTINGS =====
+
+// ===== BADGE LIBRARY PAGE =====
+app.get('/profile/badges', isAuthenticated, async (req, res) => {
+    const user = await User.findOne({ username: req.session.user });
+    const currentBadges = user.badges || [];
+
+    let badgeGridHtml = '';
+    Object.keys(badgeLibrary).forEach(key => {
+        const b = badgeLibrary[key];
+        const isSelected = currentBadges.includes(key);
+        badgeGridHtml += `
+            <label class="badge-option ${isSelected ? 'selected' : ''}" onclick="toggleBadge(this, '${key}')">
+                <input type="checkbox" name="badges" value="${key}" ${isSelected ? 'checked' : ''}>
+                <div class="badge-icon">${b.svg}</div>
+                <span class="badge-label">${b.label}</span>
+            </label>
+        `;
+    });
+
+    res.send(`
+        <html><head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/style.css">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        <title>Badge Library - EliGet</title>
+        </head><body>
+        <div class="container">
+            <header>
+                <span class="profile-title">Badge Library</span>
+                <a href="/profile" class="header-icon" title="Back">${icons.back}</a>
+            </header>
+
+            <p style="color: #718096; font-size: 0.9rem; margin-bottom: 15px; text-align: center;">Select up to 3 badges for your profile</p>
+
+            <form action="/profile/badges" method="POST" id="badgeForm">
+                <div class="badge-grid">
+                    ${badgeGridHtml}
+                </div>
+                <div class="badge-save-bar">
+                    <a href="/profile" class="avatar-cancel-btn">Cancel</a>
+                    <button type="submit" class="avatar-save-btn">Save Badges</button>
+                </div>
+            </form>
+        </div>
+        <div class="bottom-nav"><a href="/">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile" class="active">${icons.profile}<span>Profile</span></a></div>
+
+        <script>
+            function toggleBadge(el, key) {
+                const checkbox = el.querySelector('input');
+                const selected = document.querySelectorAll('.badge-option.selected');
+                
+                if (!checkbox.checked) {
+                    // Selecting
+                    if (selected.length >= 3) {
+                        alert('You can select max 3 badges');
+                        return;
+                    }
+                    checkbox.checked = true;
+                    el.classList.add('selected');
+                } else {
+                    // Deselecting
+                    checkbox.checked = false;
+                    el.classList.remove('selected');
+                }
+            }
+        </script>
+        </body></html>
+    `);
+});
+
+// Save Badges (POST)
+app.post('/profile/badges', isAuthenticated, async (req, res) => {
+    try {
+        let selected = req.body.badges || [];
+        if (!Array.isArray(selected)) selected = [selected];
+        selected = selected.slice(0, 3);
+
+        await User.updateOne(
+            { username: req.session.user },
+            { badges: selected }
+        );
+        res.redirect('/profile?status=badges_saved');
+    } catch (err) {
+        console.error('Badge save error:', err);
+        res.redirect('/profile');
+    }
+});
+
+// ===== VISIT OTHER USER'S PROFILE =====
+const interestIcons = {
+    music: `<svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`,
+    book: `<svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>`,
+    nature: `<svg viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/></svg>`,
+    tech: `<svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>`,
+    sports: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08C16.71 17.72 14.5 19 12 19z"/></svg>`,
+    art: `<svg viewBox="0 0 24 24"><path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.1-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9z"/></svg>`,
+    travel: `<svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>`,
+    coffee: `<svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg>`,
+    poetry: `<svg viewBox="0 0 24 24"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>`,
+    gaming: `<svg viewBox="0 0 24 24"><path d="M21.58 16.09l-1.09-7.66C20.21 6.46 18.52 5 16.53 5H7.47C5.48 5 3.79 6.46 3.51 8.43l-1.09 7.66C2.2 17.63 3.39 19 4.94 19c.68 0 1.32-.27 1.8-.75L9 16h6l2.25 2.25c.48.48 1.13.75 1.8.75 1.56 0 2.75-1.37 2.53-2.91zM11 11H9v2H8v-2H6v-1h2V8h1v2h2v1zm4-1c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm2 3c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>`
+};
+
+const interestLabels = {
+    music: 'Music', book: 'Books', nature: 'Nature', tech: 'Tech',
+    sports: 'Sports', art: 'Art', travel: 'Travel', coffee: 'Coffee',
+    poetry: 'Poetry', gaming: 'Gaming'
+};
+
+app.get('/profile/:username', isAuthenticated, async (req, res) => {
+    try {
+        const targetUsername = req.params.username;
+        const me = req.session.user;
+
+        if (targetUsername === me) return res.redirect('/profile');
+        if (targetUsername === 'avatar') return res.redirect('/profile/avatar');
+
+        const user = await User.findOne({ username: targetUsername });
+        if (!user) return res.redirect('/');
+
+        const displayName = user.full_name || user.username;
+        const initial = displayName.charAt(0).toUpperCase();
+        const avatarUrl = user.avatar ? `<img src="${user.avatar}" alt="Avatar">` : initial;
+
+        const FriendRequest = require('./models/FriendRequest');
+        const friendship = await FriendRequest.findOne({
+            status: 'accepted',
+            $or: [{ from: me, to: targetUsername }, { from: targetUsername, to: me }]
+        });
+        const isFriend = !!friendship;
+
+        const pendingRequest = await FriendRequest.findOne({
+            status: 'pending',
+            $or: [{ from: me, to: targetUsername }, { from: targetUsername, to: me }]
+        });
+
+        const theirPosts = await Post.find({ author: targetUsername }).sort({ created_at: -1 });
+        const postCount = theirPosts.length;
+
+        const friendCount = await FriendRequest.countDocuments({
+            status: 'accepted',
+            $or: [{ from: targetUsername }, { to: targetUsername }]
+        });
+
+        let postsHtml = '';
+        if (theirPosts.length === 0) {
+            postsHtml = '<div class="empty-state"><p>No posts yet.</p></div>';
+        } else {
+            for (const p of theirPosts) {
+                postsHtml += await renderPostCard(p, me);
+            }
+        }
+
+        let bioHtml = '';
+        if (user.bio && user.bio.trim()) {
+            bioHtml = `<p class="pp-bio">${user.bio}</p>`;
+        }
+
+        let badgesHtml = '';
+        if (user.badges && user.badges.length > 0) {
+            user.badges.forEach(b => {
+                if (badgeLibrary[b]) {
+                    badgesHtml += `<span class="pp-badge" title="${badgeLibrary[b].label}">${badgeLibrary[b].svg}</span>`;
+                }
+            });
+            if (badgesHtml) badgesHtml = `<div class="pp-badges">${badgesHtml}</div>`;
+        }
+
+        let actionBtn = '';
+        if (isFriend) {
+            actionBtn = `<a href="/chat/${targetUsername}" class="pp-action-btn primary">Message</a>`;
+        } else if (pendingRequest && pendingRequest.from === me) {
+            actionBtn = `<button class="pp-action-btn disabled" disabled>Requested</button>`;
+        } else if (pendingRequest && pendingRequest.to === me) {
+            actionBtn = `<a href="/chat/notifications" class="pp-action-btn primary">Respond</a>`;
+        } else {
+            actionBtn = `<form action="/chat/request/${targetUsername}" method="POST" style="margin:0; display:inline;">
+                <button type="submit" class="pp-action-btn primary">Add Friend</button>
+            </form>`;
+        }
+
+        const bottomNav = `<div class="bottom-nav"><a href="/" class="active">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile">${icons.profile}<span>Profile</span></a></div>`;
+
+        res.send(`
+            <html><head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="/style.css">
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+            <title>${displayName} - EliGet</title>
+            </head><body>
+            <div class="container">
+                <header>
+                    <span class="profile-title">Profile</span>
+                    <a href="/" class="header-icon" title="Back">${icons.back}</a>
+                </header>
+
+                <div class="pp-card">
+                    <div class="pp-avatar-wrap">
+                        <div class="pp-avatar">${avatarUrl}</div>
+                    </div>
+
+                    <h2 class="pp-name">${displayName}</h2>
+                    <p class="pp-username">@${user.username}</p>
+                    ${badgesHtml}
+                    ${bioHtml}
+
+                    <div class="pp-stats">
+                        <div class="pp-stat">
+                            <div class="pp-stat-num">${postCount}</div>
+                            <div class="pp-stat-label">Posts</div>
+                        </div>
+                        <div class="pp-stat">
+                            <div class="pp-stat-num">${friendCount}</div>
+                            <div class="pp-stat-label">Friends</div>
+                        </div>
+                    </div>
+
+                    <div>${actionBtn}</div>
+                </div>
+
+                <div class="pp-section-title">Recent Posts</div>
+                ${postsHtml}
+            </div>
+            ${bottomNav}
+            </body></html>
+        `);
+    } catch (err) {
+        console.error('Profile visit error:', err);
+        res.redirect('/');
+    }
+});
+
 app.get('/settings', isAuthenticated, async (req, res) => {
     const user = await User.findOne({ username: req.session.user });
     const currentFullName = user.full_name || user.username;
