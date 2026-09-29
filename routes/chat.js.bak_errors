@@ -1,5 +1,4 @@
 const express = require('express');
-const errorPage = require('../errorPage');
 const router = express.Router();
 const User = require('../models/User');
 const FriendRequest = require('../models/FriendRequest');
@@ -204,7 +203,7 @@ router.get('/', async (req, res) => {
         `);
     } catch (error) {
         console.error('Chat list error:', error);
-        res.status(500).send(errorPage(500, 'Something went wrong', 'An unexpected error occurred. Please try again.', '/', 'Back to home'));
+        res.send('Something went wrong.');
     }
 });
 
@@ -331,7 +330,7 @@ router.get('/notifications', async (req, res) => {
         `);
     } catch (error) {
         console.error('Notifications error:', error);
-        res.status(500).send(errorPage(500, 'Something went wrong', 'An unexpected error occurred. Please try again.', '/', 'Back to home'));
+        res.send('Something went wrong.');
     }
 });
 

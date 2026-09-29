@@ -1,5 +1,4 @@
 const express = require('express');
-const errorPage = require('../errorPage');
 const router = express.Router();
 const Post = require('../models/Post');
 
@@ -189,7 +188,7 @@ router.post('/create', async (req, res) => {
         res.redirect('/');
     } catch (error) {
         console.error('Post create error:', error);
-        res.status(500).send(errorPage(500, 'Something went wrong', 'An unexpected error occurred. Please try again.', '/post/create', 'Back to create post'));
+        res.send('Something went wrong. <a href="/post/create">Try again</a>');
     }
 });
 

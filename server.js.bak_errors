@@ -1203,31 +1203,6 @@ app.post('/settings/delete', isAuthenticated, async (req, res) => {
     res.redirect('/');
 });
 
-// ===== 404 HANDLER =====
-app.use((req, res) => {
-    const errorPage = require('./errorPage');
-    res.status(404).send(errorPage(
-        404,
-        'Page not found',
-        'The page you are looking for does not exist or has been moved.',
-        '/',
-        'Back to home'
-    ));
-});
-
-// ===== 500 ERROR HANDLER =====
-app.use((err, req, res, next) => {
-    console.error('Server error:', err);
-    const errorPage = require('./errorPage');
-    res.status(500).send(errorPage(
-        500,
-        'Something went wrong',
-        'An unexpected error occurred. Please try again.',
-        '/',
-        'Back to home'
-    ));
-});
-
 // ===== START SERVER =====
 connectDB().then(() => {
     app.listen(PORT, '0.0.0.0', () => { console.log('EliGet সার্ভার চালু হয়েছে: http://localhost:' + PORT); });

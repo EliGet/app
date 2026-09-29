@@ -1,5 +1,4 @@
 const express = require('express');
-const errorPage = require('../errorPage');
 const router = express.Router();
 const User = require('../models/User');
 const FriendRequest = require('../models/FriendRequest');
@@ -110,7 +109,7 @@ router.get('/create', async (req, res) => {
         `);
     } catch (error) {
         console.error('Group create page error:', error);
-        res.status(500).send(errorPage(500, 'Something went wrong', 'An unexpected error occurred. Please try again.', '/', 'Back to home'));
+        res.send('Something went wrong.');
     }
 });
 
@@ -134,7 +133,7 @@ router.post('/create', async (req, res) => {
         res.redirect(`/group/${newGroup._id}`);
     } catch (error) {
         console.error('Group create error:', error);
-        res.status(500).send(errorPage(500, 'Something went wrong', 'An unexpected error occurred. Please try again.', '/group/create', 'Back to create group'));
+        res.send('Something went wrong. <a href="/group/create">Try again</a>');
     }
 });
 
