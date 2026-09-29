@@ -34,13 +34,10 @@ function wapPage(title, body, options = {}) {
     const user = options.user || '';
     const userParam = user ? '?u=' + encodeURIComponent(user) : '';
     const backUrl = options.back ? (options.back + userParam) : '';
-    const backLink = backUrl
-        ? `<p><small><a href="${backUrl}">Back</a> | <a href="/wap">Home</a></small></p>`
-        : '';
+
     // Auto-append ?u= to all /wap links in body if user is set
     let processedBody = body;
     if (user) {
-        // Append ?u= to href="/wap/..." links that don't have ?u=
         processedBody = body.replace(/href="(\/wap[^"]*?)"/g, (match, url) => {
             if (url.includes('?')) {
                 return `href="${url}&u=${encodeURIComponent(user)}"`;
@@ -50,21 +47,33 @@ function wapPage(title, body, options = {}) {
         });
     }
 
+    // Only show "Back" if the caller explicitly requested it (not Home)
+    const backLink = backUrl
+        ? `<p><a href="${backUrl}">[ Back ]</a>  <a href="/wap${userParam}">[ Home ]</a></p>`
+        : '';
+
+    const userLine = user
+        ? `<p><small>Signed in as <b>${escapeXml(user)}</b></small></p>`
+        : '';
+
     return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 ${autoRefresh}
-<title>${escapeXml(title)}</title>
+<title>${escapeXml(title)} - EliGet</title>
 </head>
 <body>
-<h3>${escapeXml(title)}</h3>
+<h1>${escapeXml(title)}</h1>
+<hr/>
 ${processedBody}
 <hr/>
 ${backLink}
-<p><small>EliGet - Text-only network</small></p>
+${userLine}
+<p><small><b>EliGet</b><br/>Text-only network</small></p>
 </body>
 </html>`;
 }
@@ -85,20 +94,19 @@ router.get('/', async (req, res) => {
         } catch (e) {}
 
         menu = `
-            <p>Welcome, <b>${escapeXml(username)}</b></p>
-            <p><a href="/wap/feed">1. Feed</a></p>
-            <p><a href="/wap/post">2. New Post</a></p>
-            <p><a href="/wap/chat">3. Chat</a></p>
-            <p><a href="/wap/notifications">4. Notifications${notifBadge}</a></p>
-            <p><a href="/wap/profile">5. Profile</a></p>
-            <p><a href="/wap/logout">6. Logout</a></p>
+            <p><b>1.</b> <a href="/wap/feed">Feed</a></p>
+            <p><b>2.</b> <a href="/wap/post">New Post</a></p>
+            <p><b>3.</b> <a href="/wap/chat">Chat</a></p>
+            <p><b>4.</b> <a href="/wap/notifications">Notifications${notifBadge}</a></p>
+            <p><b>5.</b> <a href="/wap/profile">Profile</a></p>
+            <p><b>6.</b> <a href="/wap/logout">Logout</a></p>
         `;
     } else {
         menu = `
-            <p>Text-only, anti-addiction network</p>
-            <p><a href="/wap/login">1. Login</a></p>
-            <p><a href="/wap/signup">2. Signup</a></p>
-            <p><a href="/wap/feed">3. Feed (read only)</a></p>
+            <p>Text-only network.<br/>No algorithms. No videos.<br/>Just pure thoughts.</p>
+            <p><b>1.</b> <a href="/wap/login">Login</a></p>
+            <p><b>2.</b> <a href="/wap/signup">Create Account</a></p>
+            <p><b>3.</b> <a href="/wap/feed">Browse Feed (read only)</a></p>
         `;
     }
 
@@ -107,15 +115,18 @@ router.get('/', async (req, res) => {
 
 // ===== LOGIN =====
 router.get('/login', (req, res) => {
+    const err = req.query.err ? `<p><b>Error:</b> ${escapeXml(req.query.err)}</p><hr/>` : '';
     const body = `
+        ${err}
         <form action="/wap/login" method="POST">
-            <p>Username:<br/><input type="text" name="username" size="12" maxlength="20"/></p>
-            <p>Password:<br/><input type="password" name="password" size="12" maxlength="30"/></p>
+            <p>Username<br/><input type="text" name="username" size="14" maxlength="20"/></p>
+            <p>Password<br/><input type="password" name="password" size="14" maxlength="30"/></p>
             <p><input type="submit" value="Login"/></p>
         </form>
-        <p><a href="/wap/signup">Signup</a></p>
+        <hr/>
+        <p><a href="/wap/signup">Create new account</a></p>
     `;
-    res.send(wapPage('Login', body, { back: '/wap' , user: req.session.user }));
+    res.send(wapPage('Login', body, { back: '/wap', user: req.session.user }));
 });
 
 router.post('/login', async (req, res) => {
@@ -141,29 +152,37 @@ router.post('/login', async (req, res) => {
 
 // ===== SIGNUP =====
 router.get('/signup', (req, res) => {
+    const err = req.query.err ? `<p><b>Error:</b> ${escapeXml(req.query.err)}</p><hr/>` : '';
     const body = `
+        ${err}
         <form action="/wap/signup" method="POST">
-            <p>Full Name:<br/><input type="text" name="full_name" size="15" maxlength="30"/></p>
-            <p>Username:<br/><input type="text" name="username" size="12" maxlength="20"/></p>
-            <p>Password:<br/><input type="password" name="password" size="12" maxlength="30"/></p>
-            <p><input type="submit" value="Signup"/></p>
+            <p>Full name<br/><input type="text" name="full_name" size="16" maxlength="50"/></p>
+            <p>Username<br/><input type="text" name="username" size="14" maxlength="20"/></p>
+            <p><small>Letters, numbers, underscore. 3-20 chars.</small></p>
+            <p>Password<br/><input type="password" name="password" size="14" maxlength="30"/></p>
+            <p><small>At least 6 characters.</small></p>
+            <p><input type="submit" value="Create Account"/></p>
         </form>
-        <p><a href="/wap/login">Already have account? Login</a></p>
+        <hr/>
+        <p><a href="/wap/login">Already have an account? Login</a></p>
     `;
-    res.send(wapPage('Create Account', body, { back: '/wap' , user: req.session.user }));
+    res.send(wapPage('Create Account', body, { back: '/wap', user: req.session.user }));
 });
 
 router.post('/signup', async (req, res) => {
     try {
         const { full_name, username, password } = req.body;
 
-        if (username.includes(' ')) {
-            return res.send(wapPage('Error', `<p>No spaces in username.</p><p><a href="/wap/signup">Try again</a></p>`));
+        if (!/^[a-zA-Z0-9_]{3,20}$/.test(username || '')) {
+            return res.redirect('/wap/signup?err=' + encodeURIComponent('Username: 3-20 letters, numbers, underscore.'));
+        }
+        if (!password || password.length < 6) {
+            return res.redirect('/wap/signup?err=' + encodeURIComponent('Password needs 6+ characters.'));
         }
 
         const existing = await User.findOne({ username });
         if (existing) {
-            return res.send(wapPage('Error', `<p>Username taken.</p><p><a href="/wap/signup">Try again</a></p>`));
+            return res.redirect('/wap/signup?err=' + encodeURIComponent('Username already taken.'));
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -230,17 +249,17 @@ router.get('/feed', async (req, res) => {
                     readMore = ` <a href="/wap/post/${p._id}">Read more</a>`;
                 }
 
-                html += `<p>${skip + i + 1}. <b>${escapeXml(displayName)}</b><br/>${escapeXml(body)}${readMore}</p>`;
+                html += `<p><b>${escapeXml(displayName)}</b><br/>${escapeXml(body)}${readMore}</p>`;
             }
 
             // Pagination
             html += '<hr/>';
             if (page > 1) {
-                html += `<a href="/wap/feed?page=${page - 1}">Previous</a> `;
+                html += `<a href="/wap/feed?page=${page - 1}">[ Previous ]</a>  `;
             }
-            html += `[Page ${page} of ${totalPages}] `;
+            html += `<small>Page ${page}/${totalPages}</small>`;
             if (page < totalPages) {
-                html += `<a href="/wap/feed?page=${page + 1}">Next</a>`;
+                html += `  <a href="/wap/feed?page=${page + 1}">[ Next ]</a>`;
             }
         }
 
