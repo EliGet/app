@@ -16,7 +16,6 @@ app.use((req, res, next) => {
 });
 const PORT = process.env.PORT || 3000;
 const path = require('path');
-const { linkify } = require('./lib/linkify');
 
 // Models
 const User = require('./models/User');
@@ -391,7 +390,7 @@ async function renderPostCard(p, currentUser) {
                 </div>
                 ${menuHtml}
             </div>
-            <div class="post-content">${linkify(p.body)}</div>
+            <div class="post-content">${p.body}</div>
             ${imageHtml}
             <div class="post-love-row">
                 <button type="button" class="post-love-btn ${liked ? 'liked' : ''}" data-post-id="${p._id}" onclick="toggleLove(event, this)">
@@ -633,7 +632,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
 
         let bioHtml = '';
         if (user.bio && user.bio.trim()) {
-            bioHtml = `<p class="pp-bio">${linkify(user.bio)}</p>`;
+            bioHtml = `<p class="pp-bio">${user.bio}</p>`;
         }
 
         let badgesInline = '';
@@ -1050,7 +1049,7 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
 
         let bioHtml = '';
         if (user.bio && user.bio.trim()) {
-            bioHtml = `<p class="pp-bio">${linkify(user.bio)}</p>`;
+            bioHtml = `<p class="pp-bio">${user.bio}</p>`;
         }
 
         let badgesHtml = '';
