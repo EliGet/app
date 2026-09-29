@@ -485,29 +485,13 @@ function isButtonPhone(req) {
 
 // ===== HOME PAGE (FEED) =====
 app.get('/', async (req, res) => {
-    // Auto-detect button phones and redirect to WAP UI
     if (isButtonPhone(req)) {
         return res.redirect('/wap');
     }
-    if (req.session.user) {
-        const posts = await Post.find().sort({ created_at: -1 }).limit(50);
-        let html = '<html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body><div class="container">';
-        html += '<header class="feed-header"><h1 class="feed-title">Feed</h1></header>';
-        
-        if (posts.length === 0) {
-            html += '<p style="text-align:center; color:#a0aec0; padding:20px;">No posts yet. Be the first to post!</p>';
-        } else {
-            const feedFollowSet = await getFollowSet(req.session.user);
-            for (const p of posts) {
-                html += await renderPostCard(p, req.session.user, feedFollowSet);
-            }
-        }
-        html += '</div>';
-        html += getDeleteModal();
-        html += `<div class="bottom-nav"><a href="/" class="active">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile">${icons.profile}<span>Profile</span></a></div>`;
-        html += '</body></html>';
-        res.send(html);
-    } else {
+
+    if (!req.session.user) {
+        // Public landing page — unchanged
+        const latestPosts = await Post.find().sort({ created_at: -1 }).limit(2);
         let previewHtml = '';
         const demos = [
             { name: 'Ayesha Khatun', text: 'The best conversations happen when nobody is trying to win.', likes: 12, time: '2h', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Ayesha' },
@@ -522,12 +506,11 @@ app.get('/', async (req, res) => {
                         <span class="lp-post-author">${d.name}</span>
                     </div>
                     <p class="lp-post-body">${d.text}</p>
-                    <div class="lp-post-meta"><span>${d.time}</span><span class="lp-post-dot">·</span><span>${d.likes} likes</span></div>
+                    <div class="lp-post-meta"><span>${d.time}</span><span class="lp-post-dot">\u00b7</span><span>${d.likes} likes</span></div>
                 </div>
             `;
         }
-
-        res.send(`
+        return res.send(`
             <html><head>
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link rel="stylesheet" href="/style.css">
@@ -551,7 +534,7 @@ app.get('/', async (req, res) => {
                 </section>
 
                 <div class="lp-cta">
-                    <a href="/auth/signup" class="lp-btn-primary">Create Account <span class="lp-arrow">\u2192</span></a>
+                    <a href="/auth/signup" class="lp-btn-primary">Create Account<span class="lp-arrow">\u2192</span></a>
                     <a href="/auth/login" class="lp-btn-secondary">Login</a>
                 </div>
 
@@ -580,13 +563,80 @@ app.get('/', async (req, res) => {
 
                 <div class="lp-guest">
                     <span class="lp-guest-text">Not ready to join?</span>
-                    <a href="/feed" class="lp-guest-link">Browse the public feed \u2192</a>
+                    <a href="/feed" class="lp-guest-link">Browse the public feed<span class="lp-arrow-svg-inline">\u2192</span></a>
                 </div>
 
             </div>
             </body></html>
         `);
     }
+
+    // ========== LOGGED-IN HOME WITH TABS ==========
+    const me = req.session.user;
+    const feedParam = req.query.feed === 'following' ? 'following' : 'foryou';
+
+    let posts = [];
+    let followSet = await getFollowSet(me);
+
+    if (feedParam === 'following') {
+        const follows = await Follow.find({ follower: me }).select('following');
+        const followingUsernames = follows.map(f => f.following);
+        if (followingUsernames.length > 0) {
+            posts = await Post.find({ author: { $in: followingUsernames } }).sort({ created_at: -1 }).limit(50);
+        }
+    } else {
+        posts = await Post.find().sort({ created_at: -1 }).limit(50);
+    }
+
+    let postsHtml = '';
+    if (posts.length === 0) {
+        if (feedParam === 'following') {
+            postsHtml = `<div class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h10v2H7zm0 4h7v2H7z"/></svg>
+                <h3>Nothing here yet</h3>
+                <p>Follow people and their posts will show up here.</p>
+                <a href="/feed">Browse public feed</a>
+            </div>`;
+        } else {
+            postsHtml = `<div class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h10v2H7zm0 4h7v2H7z"/></svg>
+                <h3>Nothing here yet</h3>
+                <p>Be the first to share a thought with the community.</p>
+                <a href="/post/create">Write the first post</a>
+            </div>`;
+        }
+    } else {
+        for (const p of posts) {
+            postsHtml += await renderPostCard(p, me, followSet);
+        }
+    }
+
+    const bottomNav = `<div class="bottom-nav"><a href="/" class="active">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile">${icons.profile}<span>Profile</span></a></div>`;
+
+    res.send(`
+        <html><head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/style.css">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
+        <title>EliGet</title>
+        </head><body>
+        <div class="container">
+            <header class="feed-header">
+                <h1 class="feed-title">Home</h1>
+            </header>
+
+            <div class="tab-bar">
+                <a href="/?feed=foryou" class="tab-item ${feedParam === 'foryou' ? 'active' : ''}">For You</a>
+                <a href="/?feed=following" class="tab-item ${feedParam === 'following' ? 'active' : ''}">Following</a>
+            </div>
+
+            <div class="feed-list">${postsHtml}</div>
+        </div>
+        ${bottomNav}
+        ${getDeleteModal()}
+        </body></html>
+    `);
 });
 
 // ===== FEED (PUBLIC) =====

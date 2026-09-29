@@ -4990,3 +4990,103 @@ header .header-icon:first-child {
     color: #dc2626;
     border-color: #fecaca;
 }
+
+/* ===== Home tabs v1 ===== */
+.feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 4px;
+}
+
+/* Tab bar on home — matches chat list style */
+.tab-bar {
+    display: flex;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.02);
+    gap: 4px;
+}
+.tab-bar .tab-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 12px;
+    border-radius: 9px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #64748b;
+    text-decoration: none;
+    letter-spacing: 0.1px;
+    transition: background 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    border: none;
+}
+.tab-bar .tab-item:hover {
+    color: #0f172a;
+    background: #f8fafc;
+}
+.tab-bar .tab-item.active {
+    background: #0f172a;
+    color: #fff;
+    font-weight: 700;
+}
+.tab-bar .tab-item.active:hover {
+    background: #1e293b;
+    color: #fff;
+}
+
+/* Feed header — no border bottom line */
+.feed-header {
+    border-bottom: none !important;
+    padding-bottom: 4px !important;
+    margin-bottom: 14px !important;
+}
+
+/* ===== Home tabs v2 — pill override ===== */
+.container > .tab-bar,
+.feed-list + .tab-bar,
+.tab-bar {
+    display: flex !important;
+    background: #fff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 4px !important;
+    margin-bottom: 16px !important;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.02) !important;
+    gap: 4px !important;
+    overflow: visible !important;
+}
+.tab-bar .tab-item {
+    flex: 1 !important;
+    text-align: center !important;
+    padding: 10px 12px !important;
+    border-radius: 9px !important;
+    font-size: 0.86rem !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    text-decoration: none !important;
+    letter-spacing: 0.1px !important;
+    transition: background 0.15s ease, color 0.15s ease !important;
+    -webkit-tap-highlight-color: transparent !important;
+    border: none !important;
+    border-bottom: none !important;
+    background: transparent !important;
+}
+.tab-bar .tab-item:hover {
+    color: #0f172a !important;
+    background: #f8fafc !important;
+}
+.tab-bar .tab-item.active {
+    background: #0f172a !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    border: none !important;
+    border-bottom: none !important;
+}
+.tab-bar .tab-item.active:hover {
+    background: #1e293b !important;
+    color: #fff !important;
+}
