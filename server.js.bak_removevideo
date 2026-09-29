@@ -8,7 +8,7 @@ app.use((req, res, next) => {
     const _send = res.send.bind(res);
     res.send = function(body) {
         if (typeof body === 'string' && body.includes('</body>') && !body.includes('/love.js')) {
-            body = body.replace('</body>', '<script src="/love.js"></script><script src="/follow.js"></script></body>');
+            body = body.replace('</body>', '<script src="/love.js"></script></body>');
         }
         return _send(body);
     };
@@ -16,11 +16,10 @@ app.use((req, res, next) => {
 });
 const PORT = process.env.PORT || 3000;
 const path = require('path');
-const { linkify, linkifyPost, linkifyBio } = require('./lib/linkify');
+const { linkify, linkifySimple } = require('./lib/linkify');
 
 // Models
 const User = require('./models/User');
-const Follow = require('./models/Follow');
 const Post = require('./models/Post');
 const FriendRequest = require('./models/FriendRequest');
 const Group = require('./models/Group');
@@ -326,13 +325,7 @@ const postImagesMap = {
       </svg>`
 };
 
-async function getFollowSet(currentUser) {
-    if (!currentUser) return new Set();
-    const follows = await Follow.find({ follower: currentUser }).select('following');
-    return new Set(follows.map(f => f.following));
-}
-
-async function renderPostCard(p, currentUser, followSet) {
+async function renderPostCard(p, currentUser) {
     const author = await User.findOne({ username: p.author });
     const displayName = author ? (author.full_name || author.username) : p.author;
     const initial = displayName.charAt(0).toUpperCase();
@@ -354,12 +347,6 @@ async function renderPostCard(p, currentUser, followSet) {
     else if (diffMin < 1440) timeStr = Math.floor(diffMin / 60) + 'h';
     else if (diffMin < 10080) timeStr = Math.floor(diffMin / 1440) + 'd';
     else timeStr = new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-
-    let postFollowBtn = '';
-    if (currentUser && currentUser !== p.author) {
-        const isFollowingAuthor = followSet && followSet.has(p.author);
-        postFollowBtn = `<button type="button" class="post-follow-btn${isFollowingAuthor ? ' following' : ''}" data-username="${p.author}" onclick="togglePostFollow(event, this)">${isFollowingAuthor ? 'Following' : 'Follow'}</button>`;
-    }
 
     let menuHtml = '';
     if (currentUser && currentUser === p.author) {
@@ -395,7 +382,6 @@ async function renderPostCard(p, currentUser, followSet) {
                 <div class="post-user-info">
                     <div class="post-author-row">
                         <a href="/profile/${p.author}" class="post-author-link"><span class="post-author-name">${displayName}</span></a>
-                        ${postFollowBtn}
                         ${moodSvg ? `<span class="post-mood">${moodSvg}</span>` : ''}
                     </div>
                     <div class="post-meta-row">
@@ -405,7 +391,7 @@ async function renderPostCard(p, currentUser, followSet) {
                 </div>
                 ${menuHtml}
             </div>
-            <div class="post-content">${linkifyPost(p.body)}</div>
+            <div class="post-content">${linkify(p.body)}</div>
             ${imageHtml}
             <div class="post-love-row">
                 <button type="button" class="post-love-btn ${liked ? 'liked' : ''}" data-post-id="${p._id}" onclick="toggleLove(event, this)">
@@ -497,9 +483,8 @@ app.get('/', async (req, res) => {
         if (posts.length === 0) {
             html += '<p style="text-align:center; color:#a0aec0; padding:20px;">No posts yet. Be the first to post!</p>';
         } else {
-            const feedFollowSet = await getFollowSet(req.session.user);
             for (const p of posts) {
-                html += await renderPostCard(p, req.session.user, feedFollowSet);
+                html += await renderPostCard(p, req.session.user);
             }
         }
         html += '</div>';
@@ -598,9 +583,8 @@ app.get('/feed', async (req, res) => {
     if (posts.length === 0) {
         html += '<p style="text-align:center; color:#a0aec0; padding:20px;">No posts yet.</p>';
     } else {
-        const feedFollowSet = await getFollowSet(req.session.user || null);
         for (const p of posts) {
-            html += await renderPostCard(p, req.session.user || null, feedFollowSet);
+            html += await renderPostCard(p, req.session.user || null);
         }
     }
     html += '</div>';
@@ -642,15 +626,14 @@ app.get('/profile', isAuthenticated, async (req, res) => {
                 <a href="/post/create">Write your first post</a>
             </div>`;
         } else {
-            const ownFollowSet = await getFollowSet(req.session.user);
             for (const p of myPosts) {
-                postsHtml += await renderPostCard(p, req.session.user, ownFollowSet);
+                postsHtml += await renderPostCard(p, req.session.user);
             }
         }
 
         let bioHtml = '';
         if (user.bio && user.bio.trim()) {
-            bioHtml = `<p class="pp-bio">${linkifyBio(user.bio)}</p>`;
+            bioHtml = `<p class="pp-bio">${linkifySimple(user.bio)}</p>`;
         }
 
         let badgesInline = '';
@@ -1056,23 +1039,18 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
             $or: [{ from: targetUsername }, { to: targetUsername }]
         });
 
-        const followerCount = await Follow.countDocuments({ following: targetUsername });
-        const followingCount = await Follow.countDocuments({ follower: targetUsername });
-        const isFollowing = await Follow.findOne({ follower: me, following: targetUsername });
-
         let postsHtml = '';
         if (theirPosts.length === 0) {
             postsHtml = '<div class="empty-state"><p>No posts yet.</p></div>';
         } else {
-            const otherFollowSet = await getFollowSet(me);
             for (const p of theirPosts) {
-                postsHtml += await renderPostCard(p, me, otherFollowSet);
+                postsHtml += await renderPostCard(p, me);
             }
         }
 
         let bioHtml = '';
         if (user.bio && user.bio.trim()) {
-            bioHtml = `<p class="pp-bio">${linkifyBio(user.bio)}</p>`;
+            bioHtml = `<p class="pp-bio">${linkifySimple(user.bio)}</p>`;
         }
 
         let badgesHtml = '';
@@ -1096,13 +1074,6 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
             actionBtn = `<form action="/chat/request/${targetUsername}" method="POST" style="margin:0; display:inline;">
                 <button type="submit" class="pp-action-btn primary">Add Friend</button>
             </form>`;
-        }
-
-        let followBtn;
-        if (isFollowing) {
-            followBtn = `<button type="button" class="pp-follow-btn following" data-username="${targetUsername}" onclick="toggleFollow(this)">Following</button>`;
-        } else {
-            followBtn = `<button type="button" class="pp-follow-btn" data-username="${targetUsername}" onclick="toggleFollow(this)">Follow</button>`;
         }
 
         const bottomNav = `<div class="bottom-nav"><a href="/" class="active">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile">${icons.profile}<span>Profile</span></a></div>`;
@@ -1136,19 +1107,12 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
                             <div class="pp-stat-label">${postCount === 1 ? 'Post' : 'Posts'}</div>
                         </div>
                         <div class="pp-stat">
-                            <div class="pp-stat-num">${followerCount}</div>
-                            <div class="pp-stat-label">${followerCount === 1 ? 'Follower' : 'Followers'}</div>
-                        </div>
-                        <div class="pp-stat">
-                            <div class="pp-stat-num">${followingCount}</div>
-                            <div class="pp-stat-label">Following</div>
+                            <div class="pp-stat-num">${friendCount}</div>
+                            <div class="pp-stat-label">${friendCount === 1 ? 'Friend' : 'Friends'}</div>
                         </div>
                     </div>
 
-                    <div class="pp-action-row-2">
-                        ${followBtn}
-                        ${actionBtn}
-                    </div>
+                    <div>${actionBtn}</div>
                 </div>
 
                 <div class="pp-section-title">Recent Posts</div>
@@ -1386,74 +1350,6 @@ app.post('/settings/delete', isAuthenticated, async (req, res) => {
     await Group.updateMany({ members: username }, { $pull: { members: username } });
     req.session.destroy();
     res.redirect('/');
-});
-
-// ===== FOLLOW TOGGLE =====
-app.post('/follow/:username', isAuthenticated, async (req, res) => {
-    try {
-        const me = req.session.user;
-        const target = req.params.username;
-        if (target === me) return res.json({ ok: false, reason: 'self' });
-
-        const targetUser = await User.findOne({ username: target });
-        if (!targetUser) return res.json({ ok: false, reason: 'notfound' });
-
-        const existing = await Follow.findOne({ follower: me, following: target });
-        let following;
-        if (existing) {
-            await Follow.deleteOne({ _id: existing._id });
-            following = false;
-        } else {
-            await Follow.create({ follower: me, following: target });
-            following = true;
-        }
-        const count = await Follow.countDocuments({ following: target });
-        res.json({ ok: true, following: following, count: count });
-    } catch (err) {
-        console.error('Follow error:', err);
-        res.json({ ok: false });
-    }
-});
-
-// ===== FOLLOWING FEED =====
-app.get('/following', isAuthenticated, async (req, res) => {
-    try {
-        const me = req.session.user;
-        const follows = await Follow.find({ follower: me }).select('following');
-        const followingUsernames = follows.map(f => f.following);
-
-        if (followingUsernames.length === 0) {
-            let html = '<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>Following - EliGet</title></head><body>';
-            html += '<div class="container">';
-            html += '<header class="feed-header"><a href="/" class="header-icon" title="Back">' + icons.back + '</a><h1 class="feed-title">Following</h1></header>';
-            html += '<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><h3>No one followed yet</h3><p>Find people to follow and their posts will appear here.</p><a href="/feed">Browse public feed</a></div>';
-            html += '</div>';
-            html += '<div class="bottom-nav"><a href="/" >' + icons.home + '<span>Home</span></a><a href="/post/create">' + icons.plus + '<span>Post</span></a><a href="/chat">' + icons.chat + '<span>Chat</span></a><a href="/profile">' + icons.profile + '<span>Profile</span></a></div>';
-            html += '</body></html>';
-            return res.send(html);
-        }
-
-        const posts = await Post.find({ author: { $in: followingUsernames } }).sort({ created_at: -1 }).limit(50);
-
-        let html = '<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>Following - EliGet</title></head><body>';
-        html += '<div class="container">';
-        html += '<header class="feed-header"><a href="/" class="header-icon" title="Back">' + icons.back + '</a><h1 class="feed-title">Following</h1></header>';
-        if (posts.length === 0) {
-            html += '<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h10v2H7zm0 4h7v2H7z"/></svg><h3>No posts yet</h3><p>The people you follow have not posted anything.</p></div>';
-        } else {
-            const followingFollowSet = await getFollowSet(me);
-            for (const p of posts) {
-                html += await renderPostCard(p, me, followingFollowSet);
-            }
-        }
-        html += '</div>';
-        html += '<div class="bottom-nav"><a href="/" >' + icons.home + '<span>Home</span></a><a href="/post/create">' + icons.plus + '<span>Post</span></a><a href="/chat">' + icons.chat + '<span>Chat</span></a><a href="/profile">' + icons.profile + '<span>Profile</span></a></div>';
-        html += '</body></html>';
-        res.send(html);
-    } catch (err) {
-        console.error('Following feed error:', err);
-        res.redirect('/');
-    }
 });
 
 // ===== 404 HANDLER =====

@@ -326,13 +326,7 @@ const postImagesMap = {
       </svg>`
 };
 
-async function getFollowSet(currentUser) {
-    if (!currentUser) return new Set();
-    const follows = await Follow.find({ follower: currentUser }).select('following');
-    return new Set(follows.map(f => f.following));
-}
-
-async function renderPostCard(p, currentUser, followSet) {
+async function renderPostCard(p, currentUser) {
     const author = await User.findOne({ username: p.author });
     const displayName = author ? (author.full_name || author.username) : p.author;
     const initial = displayName.charAt(0).toUpperCase();
@@ -354,12 +348,6 @@ async function renderPostCard(p, currentUser, followSet) {
     else if (diffMin < 1440) timeStr = Math.floor(diffMin / 60) + 'h';
     else if (diffMin < 10080) timeStr = Math.floor(diffMin / 1440) + 'd';
     else timeStr = new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-
-    let postFollowBtn = '';
-    if (currentUser && currentUser !== p.author) {
-        const isFollowingAuthor = followSet && followSet.has(p.author);
-        postFollowBtn = `<button type="button" class="post-follow-btn${isFollowingAuthor ? ' following' : ''}" data-username="${p.author}" onclick="togglePostFollow(event, this)">${isFollowingAuthor ? 'Following' : 'Follow'}</button>`;
-    }
 
     let menuHtml = '';
     if (currentUser && currentUser === p.author) {
@@ -395,7 +383,6 @@ async function renderPostCard(p, currentUser, followSet) {
                 <div class="post-user-info">
                     <div class="post-author-row">
                         <a href="/profile/${p.author}" class="post-author-link"><span class="post-author-name">${displayName}</span></a>
-                        ${postFollowBtn}
                         ${moodSvg ? `<span class="post-mood">${moodSvg}</span>` : ''}
                     </div>
                     <div class="post-meta-row">
@@ -497,9 +484,8 @@ app.get('/', async (req, res) => {
         if (posts.length === 0) {
             html += '<p style="text-align:center; color:#a0aec0; padding:20px;">No posts yet. Be the first to post!</p>';
         } else {
-            const feedFollowSet = await getFollowSet(req.session.user);
             for (const p of posts) {
-                html += await renderPostCard(p, req.session.user, feedFollowSet);
+                html += await renderPostCard(p, req.session.user);
             }
         }
         html += '</div>';
@@ -598,9 +584,8 @@ app.get('/feed', async (req, res) => {
     if (posts.length === 0) {
         html += '<p style="text-align:center; color:#a0aec0; padding:20px;">No posts yet.</p>';
     } else {
-        const feedFollowSet = await getFollowSet(req.session.user || null);
         for (const p of posts) {
-            html += await renderPostCard(p, req.session.user || null, feedFollowSet);
+            html += await renderPostCard(p, req.session.user || null);
         }
     }
     html += '</div>';
@@ -642,9 +627,8 @@ app.get('/profile', isAuthenticated, async (req, res) => {
                 <a href="/post/create">Write your first post</a>
             </div>`;
         } else {
-            const ownFollowSet = await getFollowSet(req.session.user);
             for (const p of myPosts) {
-                postsHtml += await renderPostCard(p, req.session.user, ownFollowSet);
+                postsHtml += await renderPostCard(p, req.session.user);
             }
         }
 
@@ -1064,9 +1048,8 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
         if (theirPosts.length === 0) {
             postsHtml = '<div class="empty-state"><p>No posts yet.</p></div>';
         } else {
-            const otherFollowSet = await getFollowSet(me);
             for (const p of theirPosts) {
-                postsHtml += await renderPostCard(p, me, otherFollowSet);
+                postsHtml += await renderPostCard(p, me);
             }
         }
 
@@ -1441,9 +1424,8 @@ app.get('/following', isAuthenticated, async (req, res) => {
         if (posts.length === 0) {
             html += '<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h10v2H7zm0 4h7v2H7z"/></svg><h3>No posts yet</h3><p>The people you follow have not posted anything.</p></div>';
         } else {
-            const followingFollowSet = await getFollowSet(me);
             for (const p of posts) {
-                html += await renderPostCard(p, me, followingFollowSet);
+                html += await renderPostCard(p, me);
             }
         }
         html += '</div>';

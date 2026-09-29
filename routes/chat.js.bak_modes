@@ -1,5 +1,5 @@
 const express = require('express');
-const { linkifyChat } = require('../lib/linkify');
+const { linkify } = require('../lib/linkify');
 const errorPage = require('../errorPage');
 const router = express.Router();
 const User = require('../models/User');
@@ -402,7 +402,7 @@ router.get('/:withUser', async (req, res) => {
                     messagesHtml += `
                         <div class="msg-row sent">
                             <div class="msg-content">
-                                <div class="msg-bubble msg-sent-bubble">${linkifyChat(m.body)}${tick}</div>
+                                <div class="msg-bubble msg-sent-bubble">${linkify(m.body)}${tick}</div>
                             </div>
                         </div>
                     `;
@@ -410,7 +410,7 @@ router.get('/:withUser', async (req, res) => {
                     messagesHtml += `
                         <div class="msg-row received">
                             <div class="msg-content">
-                                <div class="msg-bubble msg-received-bubble">${linkifyChat(m.body)}</div>
+                                <div class="msg-bubble msg-received-bubble">${linkify(m.body)}</div>
                             </div>
                         </div>
                     `;

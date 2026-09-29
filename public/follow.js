@@ -1,0 +1,48 @@
+function toggleFollow(btn) {
+    var username = btn.getAttribute('data-username');
+    if (!username || btn.disabled) return;
+    btn.disabled = true;
+    fetch('/follow/' + encodeURIComponent(username), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin'
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.ok) {
+            btn.textContent = data.following ? 'Following' : 'Follow';
+            btn.classList.toggle('following', data.following);
+            // Update follower count if visible
+            var stats = document.querySelectorAll('.pp-stat-num');
+            if (stats && stats.length >= 2) {
+                stats[1].textContent = data.count;
+            }
+        } else {
+            btn.disabled = false;
+        }
+    })
+    .catch(function() { btn.disabled = false; })
+    .then(function() { btn.disabled = false; });
+}
+
+// Toggle follow from post card (uses same API)
+function togglePostFollow(event, btn) {
+    if (event) { event.preventDefault(); event.stopPropagation(); }
+    var username = btn.getAttribute('data-username');
+    if (!username || btn.disabled) return;
+    btn.disabled = true;
+    fetch('/follow/' + encodeURIComponent(username), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin'
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.ok) {
+            btn.textContent = data.following ? 'Following' : 'Follow';
+            btn.classList.toggle('following', data.following);
+        }
+    })
+    .catch(function() {})
+    .then(function() { btn.disabled = false; });
+}
