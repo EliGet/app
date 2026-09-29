@@ -21,6 +21,7 @@ const { linkify, linkifyPost, linkifyBio } = require('./lib/linkify');
 // Models
 const User = require('./models/User');
 const Follow = require('./models/Follow');
+const Block = require('./models/Block');
 const Post = require('./models/Post');
 const FriendRequest = require('./models/FriendRequest');
 const Group = require('./models/Group');
@@ -326,6 +327,16 @@ const postImagesMap = {
       </svg>`
 };
 
+async function getBlockSets(currentUser) {
+    if (!currentUser) return { iBlocked: new Set(), blockedMe: new Set() };
+    const mine = await Block.find({ blocker: currentUser }).select('blocked');
+    const theirs = await Block.find({ blocked: currentUser }).select('blocker');
+    return {
+        iBlocked: new Set(mine.map(b => b.blocked)),
+        blockedMe: new Set(theirs.map(b => b.blocker))
+    };
+}
+
 async function getFollowSet(currentUser) {
     if (!currentUser) return new Set();
     const follows = await Follow.find({ follower: currentUser }).select('following');
@@ -588,6 +599,10 @@ app.get('/', async (req, res) => {
         posts = await Post.find().sort({ created_at: -1 }).limit(50);
     }
 
+    // Filter out blocked users (both directions)
+    const { iBlocked: homeIBlocked, blockedMe: homeBlockedMe } = await getBlockSets(me);
+    posts = posts.filter(p => !homeIBlocked.has(p.author) && !homeBlockedMe.has(p.author));
+
     let postsHtml = '';
     if (posts.length === 0) {
         if (feedParam === 'following') {
@@ -641,7 +656,11 @@ app.get('/', async (req, res) => {
 
 // ===== FEED (PUBLIC) =====
 app.get('/feed', async (req, res) => {
-    const posts = await Post.find().sort({ created_at: -1 }).limit(50);
+    let posts = await Post.find().sort({ created_at: -1 }).limit(50);
+    if (req.session.user) {
+        const { iBlocked, blockedMe } = await getBlockSets(req.session.user);
+        posts = posts.filter(p => !iBlocked.has(p.author) && !blockedMe.has(p.author));
+    }
     let html = '<html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body><div class="container">';
     html += '<header class="feed-header"><h1 class="feed-title">Feed</h1></header>';
     
@@ -1093,12 +1112,18 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
         });
         const isFriend = !!friendship;
 
+        // Block state
+        const iBlockedThem = await Block.findOne({ blocker: me, blocked: targetUsername });
+        const theyBlockedMe = await Block.findOne({ blocker: targetUsername, blocked: me });
+        const isBlocked = !!iBlockedThem;
+        const isBlockedByThem = !!theyBlockedMe;
+
         const pendingRequest = await FriendRequest.findOne({
             status: 'pending',
             $or: [{ from: me, to: targetUsername }, { from: targetUsername, to: me }]
         });
 
-        const theirPosts = await Post.find({ author: targetUsername }).sort({ created_at: -1 });
+        const theirPosts = (isBlocked || isBlockedByThem) ? [] : await Post.find({ author: targetUsername }).sort({ created_at: -1 });
         const postCount = theirPosts.length;
 
         const friendCount = await FriendRequest.countDocuments({
@@ -1168,8 +1193,29 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
                 <header>
                     <a href="/" class="header-icon" title="Back">${icons.back}</a>
                     <span class="profile-title" style="flex:1;">Profile</span>
+                    ${!isBlockedByThem ? `
+                        <button type="button" class="pp-menu-btn-static" onclick="toggleBlockMenu(event)" aria-label="Menu">
+                            <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></svg>
+                        </button>
+                    ` : ''}
                 </header>
 
+                ${!isBlockedByThem ? `
+                    <div class="pp-block-menu" id="blockMenu">
+                        <button type="button" class="pp-block-item ${isBlocked ? 'unblock' : 'block'}" onclick="toggleBlock('${targetUsername}', ${isBlocked ? 'true' : 'false'})">
+                            ${isBlocked ? 'Unblock user' : 'Block user'}
+                        </button>
+                    </div>
+                ` : ''}
+
+                ${(isBlocked || isBlockedByThem) ? `
+                    <div class="pp-blocked-banner">
+                        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z" fill="currentColor"/></svg>
+                        <span>${isBlocked ? 'You blocked this user' : 'This user is unavailable'}</span>
+                    </div>
+                ` : ''}
+
+                ${!(isBlocked || isBlockedByThem) ? `
                 <div class="pp-card">
                     <div class="pp-avatar-wrap">
                         <div class="pp-avatar">${avatarUrl}</div>
@@ -1200,6 +1246,7 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
                         ${actionBtn}
                     </div>
                 </div>
+                ` : ''}
 
                 <div class="pp-section-title">Recent Posts</div>
                 ${postsHtml}
@@ -1278,6 +1325,43 @@ app.get('/settings', isAuthenticated, async (req, res) => {
 
     const canAddMore = accountsData.length < 2;
 
+    // Blocked users
+    const myBlocks = await Block.find({ blocker: req.session.user });
+    const blockedData = [];
+    for (const b of myBlocks) {
+        const u = await User.findOne({ username: b.blocked });
+        if (!u) continue;
+        const dn = u.full_name || u.username;
+        blockedData.push({
+            username: b.blocked,
+            displayName: dn,
+            initial: dn.charAt(0).toUpperCase(),
+            avatar: u.avatar || ''
+        });
+    }
+
+    let blockedHtml = '';
+    if (blockedData.length === 0) {
+        blockedHtml = '<div class="st-empty">You have not blocked anyone.</div>';
+    } else {
+        for (const b of blockedData) {
+            const avatarInner = b.avatar ? `<img src="${b.avatar}" alt="">` : b.initial;
+            blockedHtml += `
+                <div class="st-blocked-item">
+                    <div class="st-account-avatar">${avatarInner}</div>
+                    <div class="st-account-info">
+                        <div class="st-account-name">${b.displayName}</div>
+                        <div class="st-account-username">@${b.username}</div>
+                    </div>
+                    <form action="/settings/unblock" method="POST" style="margin:0;">
+                        <input type="hidden" name="username" value="${b.username}">
+                        <button type="submit" class="st-unblock-btn">Unblock</button>
+                    </form>
+                </div>
+            `;
+        }
+    }
+
     res.send(`
         <html><head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1325,6 +1409,13 @@ app.get('/settings', isAuthenticated, async (req, res) => {
                         </div>
                         <svg class="st-chev" viewBox="0 0 24 24" width="18" height="18"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z" fill="currentColor"/></svg>
                     </button>
+                </div>
+            </section>
+
+            <section class="st-section">
+                <h2 class="st-section-label">Blocked users</h2>
+                <div class="st-card">
+                    ${blockedHtml}
                 </div>
             </section>
 
@@ -1483,7 +1574,9 @@ app.get('/following', isAuthenticated, async (req, res) => {
             return res.send(html);
         }
 
-        const posts = await Post.find({ author: { $in: followingUsernames } }).sort({ created_at: -1 }).limit(50);
+        const { iBlocked: fIBlocked, blockedMe: fBlockedMe } = await getBlockSets(me);
+        const visibleAuthors = followingUsernames.filter(u => !fIBlocked.has(u) && !fBlockedMe.has(u));
+        const posts = await Post.find({ author: { $in: visibleAuthors } }).sort({ created_at: -1 }).limit(50);
 
         let html = '<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>Following - EliGet</title></head><body>';
         html += '<div class="container">';
@@ -1504,6 +1597,55 @@ app.get('/following', isAuthenticated, async (req, res) => {
         console.error('Following feed error:', err);
         res.redirect('/');
     }
+});
+
+// ===== BLOCK / UNBLOCK TOGGLE =====
+app.post('/block/:username', isAuthenticated, async (req, res) => {
+    try {
+        const me = req.session.user;
+        const target = req.params.username;
+        if (target === me) return res.json({ ok: false, reason: 'self' });
+
+        const targetUser = await User.findOne({ username: target });
+        if (!targetUser) return res.json({ ok: false, reason: 'notfound' });
+
+        const existing = await Block.findOne({ blocker: me, blocked: target });
+        let blocked;
+        if (existing) {
+            await Block.deleteOne({ _id: existing._id });
+            blocked = false;
+        } else {
+            await Block.create({ blocker: me, blocked: target });
+            // Also unfollow each other
+            await Follow.deleteMany({
+                $or: [
+                    { follower: me, following: target },
+                    { follower: target, following: me }
+                ]
+            });
+            // Cancel friend requests
+            const FriendRequestModel = require('./models/FriendRequest');
+            await FriendRequestModel.deleteMany({
+                $or: [
+                    { from: me, to: target },
+                    { from: target, to: me }
+                ]
+            });
+            blocked = true;
+        }
+        res.json({ ok: true, blocked: blocked });
+    } catch (err) {
+        console.error('Block error:', err);
+        res.json({ ok: false });
+    }
+});
+
+// ===== UNBLOCK FROM SETTINGS =====
+app.post('/settings/unblock', isAuthenticated, async (req, res) => {
+    const target = req.body.username;
+    if (!target) return res.redirect('/settings');
+    await Block.deleteOne({ blocker: req.session.user, blocked: target });
+    res.redirect('/settings');
 });
 
 // ===== 404 HANDLER =====

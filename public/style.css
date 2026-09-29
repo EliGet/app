@@ -5090,3 +5090,145 @@ header .header-icon:first-child {
     background: #1e293b !important;
     color: #fff !important;
 }
+
+/* ===== Block system stage1 ===== */
+.pp-menu-btn-static {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    transition: background 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+}
+.pp-menu-btn-static:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+.pp-menu-btn-static:active {
+    transform: scale(0.94);
+}
+.pp-menu-btn-static svg { display: block; }
+
+.pp-block-menu {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(15,23,42,0.08);
+    padding: 5px;
+    display: none;
+    z-index: 50;
+    min-width: 160px;
+}
+.pp-block-menu.open { display: block; }
+.pp-block-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #334155;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.pp-block-item.block:hover {
+    background: #fef2f2;
+    color: #dc2626;
+}
+.pp-block-item.unblock:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.pp-blocked-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 18px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+.pp-blocked-banner svg {
+    fill: #94a3b8;
+    flex-shrink: 0;
+}
+
+/* profile container — relative so menu positions correctly */
+.container { position: relative; }
+
+/* ===== Chat header link v1 ===== */
+a.chat-header-user {
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+a.chat-header-user:hover {
+    opacity: 0.85;
+}
+a.chat-header-user:active {
+    opacity: 0.7;
+}
+
+/* ===== Blocked users section ===== */
+.st-empty {
+    padding: 20px 16px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.86rem;
+    font-style: italic;
+}
+
+.st-blocked-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.st-blocked-item:last-child {
+    border-bottom: none;
+}
+
+.st-unblock-btn {
+    padding: 7px 14px;
+    background: #fff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+}
+.st-unblock-btn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+.st-unblock-btn:active {
+    transform: scale(0.97);
+}

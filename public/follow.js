@@ -46,3 +46,39 @@ function togglePostFollow(event, btn) {
     .catch(function() {})
     .then(function() { btn.disabled = false; });
 }
+
+// ===== Block toggle =====
+function toggleBlockMenu(event) {
+    if (event) { event.stopPropagation(); }
+    var menu = document.getElementById('blockMenu');
+    if (menu) menu.classList.toggle('open');
+}
+
+function toggleBlock(username, currentlyBlocked) {
+    var action = currentlyBlocked ? 'Unblock' : 'Block';
+    if (!confirm(action + ' @' + username + '?')) return;
+
+    fetch('/block/' + encodeURIComponent(username), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin'
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.ok) {
+            location.reload();
+        } else {
+            alert('Could not ' + action.toLowerCase() + '. Try again.');
+        }
+    })
+    .catch(function() { alert('Network error.'); });
+}
+
+// Close menu on outside tap
+document.addEventListener('click', function(e) {
+    var menu = document.getElementById('blockMenu');
+    if (menu && menu.classList.contains('open') && !menu.contains(e.target)) {
+        var btn = e.target.closest('.pp-menu-btn-static');
+        if (!btn) menu.classList.remove('open');
+    }
+});

@@ -5,6 +5,7 @@ const router = express.Router();
 const User = require('../models/User');
 const FriendRequest = require('../models/FriendRequest');
 const Message = require('../models/Message');
+const Block = require('../models/Block');
 const Group = require('../models/Group');
 const GroupMessage = require('../models/GroupMessage');
 
@@ -45,12 +46,21 @@ router.get('/', async (req, res) => {
         });
         const acceptedUsers = acceptedRequests.map(r => r.from === me ? r.to : r.from);
 
+        // Filter blocked users both directions
+        const myBlocks = await Block.find({ blocker: me }).select('blocked');
+        const theirBlocks = await Block.find({ blocked: me }).select('blocker');
+        const blockedSet = new Set([
+            ...myBlocks.map(b => b.blocked),
+            ...theirBlocks.map(b => b.blocker)
+        ]);
+        const visibleUsers = acceptedUsers.filter(u => !blockedSet.has(u));
+
         let chatItemsHtml = '';
         let hasChats = false;
 
         // Direct Chats
         if (filter === 'all' || filter === 'unread') {
-            for (const otherUsername of acceptedUsers) {
+            for (const otherUsername of visibleUsers) {
                 const otherUser = await User.findOne({ username: otherUsername });
                 if (!otherUser) continue;
 
@@ -363,6 +373,15 @@ router.get('/:withUser', async (req, res) => {
         const withUser = req.params.withUser;
         const chatId = getChatId(me, withUser);
 
+        // Block check
+        const blockEither = await Block.findOne({
+            $or: [
+                { blocker: me, blocked: withUser },
+                { blocker: withUser, blocked: me }
+            ]
+        });
+        if (blockEither) return res.redirect('/chat');
+
         const otherUser = await User.findOne({ username: withUser });
         const displayName = otherUser ? (otherUser.full_name || otherUser.username) : withUser;
         const initial = displayName.charAt(0).toUpperCase();
@@ -428,10 +447,10 @@ router.get('/:withUser', async (req, res) => {
             <div class="container">
                 <header>
                     <a href="/chat" class="header-icon" title="Back">${icons.back}</a>
-                    <div class="chat-header-user">
+                    <a href="/profile/${withUser}" class="chat-header-user">
                         <div class="chat-header-avatar">${otherAvatarUrl}</div>
                         <span class="profile-title">${displayName}</span>
-                    </div>
+                    </a>
                 </header>
                 <div class="chat-container" id="chatContainer">${messagesHtml}</div>
                 <form class="chat-form" action="/chat/${withUser}" method="POST">
