@@ -3602,3 +3602,396 @@ header .header-icon:first-child {
     color: #0f172a;
 }
 .err-go-back svg { display: block; flex-shrink: 0; }
+
+/* ===== Settings editorial v1 ===== */
+.st-body {
+    background: #f8fafc;
+    color: #0f172a;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+}
+.st-wrap {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+}
+
+.st-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 0 24px;
+}
+.st-back {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.st-back:hover { background: #f1f5f9; color: #0f172a; }
+.st-back svg { display: block; }
+.st-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+}
+.st-spacer { width: 38px; }
+
+/* Sections */
+.st-section {
+    margin-bottom: 26px;
+}
+.st-section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin: 0 4px 10px;
+}
+.st-danger-label { color: #dc2626; }
+
+.st-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.02);
+}
+
+.st-row {
+    display: flex;
+    align-items: center;
+    padding: 16px 18px;
+}
+.st-row-content { flex: 1; min-width: 0; }
+.st-row-title {
+    font-size: 0.94rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+    letter-spacing: -0.1px;
+}
+.st-row-desc {
+    font-size: 0.82rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+.st-danger-title { color: #dc2626; }
+
+/* Form */
+.st-form {
+    padding: 0 18px 18px;
+    margin: 0;
+}
+.st-input-row {
+    display: flex;
+    gap: 8px;
+}
+.st-input-row input {
+    flex: 1;
+    padding: 12px 14px;
+    font-size: 0.94rem;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    color: #0f172a;
+    box-sizing: border-box;
+    font-family: inherit;
+    outline: none;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    min-width: 0;
+}
+.st-input-row input::placeholder { color: #94a3b8; }
+.st-input-row input:focus {
+    background: #fff;
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15,23,42,0.06);
+}
+
+.st-save-btn {
+    padding: 12px 20px;
+    background: #0f172a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease, transform 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+}
+.st-save-btn:hover { background: #1e293b; }
+.st-save-btn:active { transform: scale(0.98); }
+
+/* Action row (logout) */
+.st-action-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 18px;
+    width: 100%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.st-action-row:hover { background: #f8fafc; }
+.st-action-row:active { background: #f1f5f9; }
+
+.st-row-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.st-row-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: #64748b;
+}
+
+.st-chev {
+    color: #cbd5e1;
+    flex-shrink: 0;
+}
+
+/* Danger card */
+.st-danger-card {
+    border-color: #fecaca;
+}
+.st-danger-btn {
+    display: block;
+    width: calc(100% - 36px);
+    margin: 0 18px 18px;
+    padding: 12px 18px;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.st-danger-btn:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+.st-danger-btn:active { transform: scale(0.99); }
+
+/* Footer */
+.st-footer {
+    text-align: center;
+    padding: 20px 0 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.st-footer-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.2px;
+}
+.st-footer-dot {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #3182ce;
+    margin-bottom: 4px;
+}
+.st-footer-version {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+/* Modal polish */
+.modal-desc {
+    font-size: 0.86rem;
+    color: #64748b;
+    line-height: 1.5;
+    margin: 0 0 16px;
+    text-align: left;
+}
+.modal-title-danger { color: #dc2626; }
+
+.modal-box .btn-primary.btn-danger {
+    background: #dc2626;
+}
+.modal-box .btn-primary.btn-danger:hover {
+    background: #b91c1c;
+}
+.modal-box .btn-primary {
+    display: block;
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* ===== Accounts section v1 ===== */
+.st-accounts-card {
+    padding: 0;
+}
+
+.st-account {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.st-account:last-of-type { border-bottom: none; }
+
+.st-account-active {
+    background: #f8fafc;
+}
+
+.st-account-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #3182ce;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 1px rgba(15,23,42,0.04);
+}
+.st-account-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.st-account-info {
+    flex: 1;
+    min-width: 0;
+}
+.st-account-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.1px;
+}
+.st-account-username {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.st-account-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.st-account-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.st-account-switch {
+    padding: 7px 14px;
+    background: #0f172a;
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease, transform 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.st-account-switch:hover { background: #1e293b; }
+.st-account-switch:active { transform: scale(0.97); }
+
+.st-account-remove {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    transition: background 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.st-account-remove:hover {
+    background: #fef2f2;
+    color: #dc2626;
+}
+.st-account-remove svg { display: block; }
+
+.st-add-account {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 16px;
+    background: #fff;
+    color: #0f172a;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 700;
+    border-top: 1px solid #f1f5f9;
+    transition: background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.st-add-account:hover {
+    background: #f8fafc;
+}
+.st-add-account svg {
+    display: block;
+    color: #3182ce;
+}
+
+.st-accounts-note {
+    padding: 14px 16px;
+    background: #fff;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    text-align: center;
+    border-top: 1px solid #f1f5f9;
+    font-style: italic;
+}
