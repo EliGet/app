@@ -543,7 +543,7 @@ router.get('/:withUser', async (req, res) => {
                             })
                             .catch(() => {});
                     }
-                }, 5000);
+                }, 1000);
             </script>
             </body></html>
         `);
