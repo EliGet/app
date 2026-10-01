@@ -5353,3 +5353,83 @@ a.chat-header-user:active {
     .nt-avatar { width: 40px; height: 40px; }
     .nt-accept, .nt-reject { padding: 7px 11px; font-size: 0.76rem; }
 }
+
+/* ===== Recovery codes editorial ===== */
+.rc-check {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0 16px;
+}
+.rc-check svg { display: block; }
+
+.rc-codes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 8px 0 18px;
+}
+.rc-code {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+.rc-code-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #0f172a;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.rc-code code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: 1.5px;
+    user-select: all;
+    -webkit-user-select: all;
+    word-break: break-all;
+}
+
+.rc-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    color: #991b1b;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.45;
+    margin: 0 0 20px;
+}
+.rc-warning svg {
+    fill: #dc2626;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* Mobile compact */
+@media (max-width: 400px) {
+    .rc-code { padding: 12px 14px; }
+    .rc-code code { font-size: 0.85rem; letter-spacing: 1px; }
+}

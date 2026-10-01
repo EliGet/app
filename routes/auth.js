@@ -256,30 +256,41 @@ router.post('/signup', async (req, res) => {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link rel="stylesheet" href="/style.css">
             <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-            <title>Account Created - EliGet</title>
-            </head><body>
-            <div class="auth-page">
-                <div class="auth-topbar">
-                    <a href="/" class="auth-back-icon" title="Back to Home">${icons.back}</a>
-                </div>
-                <div class="auth-card">
-                    <div class="auth-brand">
-                        <h1 class="elget-wordmark elget-wordmark-md" style="margin: 0;">EliGet</h1>
+            <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
+            <title>Recovery Codes - EliGet</title>
+            </head><body class="au-body">
+            <div class="au-wrap">
+
+                <header class="au-topbar">
+                    <a href="/" class="au-back" title="Home">${icons.back}</a>
+                    <span class="au-brand">EliGet</span>
+                    <span class="au-spacer"></span>
+                </header>
+
+                <div class="au-card">
+                    <div class="au-head">
+                        <div class="rc-check">
+                            <svg viewBox="0 0 24 24" width="24" height="24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/></svg>
+                        </div>
+                        <h1 class="au-title">Save your recovery codes</h1>
+                        <p class="au-sub">These 3 codes are your only way back if you forget your password. Save them somewhere safe.</p>
                     </div>
-                    <div style="text-align: center;">${icons.check}</div>
-                    <h2 class="auth-heading" style="color: #38a169;">Account Created!</h2>
-                    <p class="auth-subtitle">Save these 3 recovery codes. You'll need them if you forget your password.</p>
 
-                    <div class="recovery-box">
-                        <ul>
-                            ${rawCodes.map(c => `<li>${c}</li>`).join('')}
-                        </ul>
+                    <div class="rc-codes">
+                        ${rawCodes.map((c, i) => `<div class="rc-code"><span class="rc-code-num">${i + 1}</span><code>${c}</code></div>`).join('')}
                     </div>
 
-                    <p style="color: #e53e3e; font-weight: 600; text-align: center; font-size: 0.85rem; margin: 16px 0;">Warning: Shown only once!</p>
+                    <div class="rc-warning">
+                        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="currentColor"/></svg>
+                        <span>Shown only once. You will not see these again.</span>
+                    </div>
 
-                    <a href="/auth/login" class="auth-submit" style="display:block; text-decoration:none; text-align:center;">Proceed to Login</a>
+                    <a href="/auth/login" class="au-submit" style="text-decoration:none;">
+                        Continue to login
+                        <svg class="au-arrow" viewBox="0 0 24 24" width="16" height="16"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
                 </div>
+
             </div>
             </body></html>
         `);
