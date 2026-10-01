@@ -33,6 +33,7 @@ const postRoutes = require('./routes/post');
 const chatRoutes = require('./routes/chat');
 const groupRoutes = require('./routes/group');
 const wapRoutes = require('./routes/wap');
+const studentsRoutes = require('./routes/students');
 const { badges: badgeLibrary } = require('./public/badges.js');
 
 app.use(express.json());
@@ -79,10 +80,12 @@ app.use('/post', isAuthenticated, postRoutes);
 app.use('/chat', isAuthenticated, chatRoutes);
 app.use('/group', isAuthenticated, groupRoutes);
 app.use('/wap', wapRoutes);
+app.use('/students', isAuthenticated, studentsRoutes);
 
 // ===== ICONS =====
 const icons = {
     home: `<svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>`,
+    students: `<svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>`,
     plus: `<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>`,
     chat: `<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>`,
     profile: `<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`,
@@ -626,7 +629,7 @@ app.get('/', async (req, res) => {
         }
     }
 
-    const bottomNav = `<div class="bottom-nav"><a href="/" class="active">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile">${icons.profile}<span>Profile</span></a></div>`;
+    const bottomNav = `<div class="bottom-nav"><a href="/" class="active">${icons.home}<span>Home</span></a><a href="/students">${icons.students}<span>Students</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile">${icons.profile}<span>Profile</span></a></div>`;
 
     res.send(`
         <html><head>
@@ -638,8 +641,21 @@ app.get('/', async (req, res) => {
         </head><body>
         <div class="container">
             <header class="feed-header">
-                <h1 class="feed-title">Home</h1>
+                <h1 class="feed-title">Home</h1><span id="home-students-banner"></span>
             </header>
+
+            <a href="/students" class="home-students-banner">
+                <div class="hsb-inner">
+                    <div class="hsb-icon">
+                        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" fill="currentColor"/></svg>
+                    </div>
+                    <div class="hsb-text">
+                        <div class="hsb-title">Students Community</div>
+                        <div class="hsb-sub">Questions, MCQ, Polls, Notes</div>
+                    </div>
+                    <div class="hsb-arrow">→</div>
+                </div>
+            </a>
 
             <div class="tab-bar">
                 <a href="/?feed=foryou" class="tab-item ${feedParam === 'foryou' ? 'active' : ''}">For You</a>
@@ -675,7 +691,7 @@ app.get('/feed', async (req, res) => {
     html += '</div>';
     if (req.session.user) {
         html += getDeleteModal();
-        html += `<div class="bottom-nav"><a href="/" class="active">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile">${icons.profile}<span>Profile</span></a></div>`;
+        html += `<div class="bottom-nav"><a href="/" class="active">${icons.home}<span>Home</span></a><a href="/students">${icons.students}<span>Students</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile">${icons.profile}<span>Profile</span></a></div>`;
     } else {
         html += '<div style="text-align:center; margin-top:20px;"><a href="/auth/login" style="color:#3182ce; text-decoration:none;">Login to interact</a></div>';
     }
@@ -731,7 +747,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
             });
         }
 
-        const bottomNav = `<div class="bottom-nav"><a href="/">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile" class="active">${icons.profile}<span>Profile</span></a></div>`;
+        const bottomNav = `<div class="bottom-nav"><a href="/">${icons.home}<span>Home</span></a><a href="/students">${icons.students}<span>Students</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile" class="active">${icons.profile}<span>Profile</span></a></div>`;
 
         res.send(`
             <html><head>
@@ -925,7 +941,7 @@ app.get('/profile/avatar', isAuthenticated, async (req, res) => {
             </div>
             ${saveBar}
         </div>
-        <div class="bottom-nav"><a href="/">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile" class="active">${icons.profile}<span>Profile</span></a></div>
+        <div class="bottom-nav"><a href="/">${icons.home}<span>Home</span></a><a href="/students">${icons.students}<span>Students</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile" class="active">${icons.profile}<span>Profile</span></a></div>
         </body></html>
     `);
 });
@@ -981,7 +997,7 @@ app.get('/profile/badges', isAuthenticated, async (req, res) => {
                 </div>
             </form>
         </div>
-        <div class="bottom-nav"><a href="/">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile" class="active">${icons.profile}<span>Profile</span></a></div>
+        <div class="bottom-nav"><a href="/">${icons.home}<span>Home</span></a><a href="/students">${icons.students}<span>Students</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile" class="active">${icons.profile}<span>Profile</span></a></div>
 
         <script>
             function toggleBadge(el, key) {
@@ -1054,7 +1070,7 @@ app.get('/profile/bio', isAuthenticated, async (req, res) => {
                 </form>
             </div>
         </div>
-        <div class="bottom-nav"><a href="/">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile" class="active">${icons.profile}<span>Profile</span></a></div>
+        <div class="bottom-nav"><a href="/">${icons.home}<span>Home</span></a><a href="/students">${icons.students}<span>Students</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile" class="active">${icons.profile}<span>Profile</span></a></div>
         </body></html>
     `);
 });
@@ -1180,7 +1196,7 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
             followBtn = `<button type="button" class="pp-follow-btn" data-username="${targetUsername}" onclick="toggleFollow(this)">Follow</button>`;
         }
 
-        const bottomNav = `<div class="bottom-nav"><a href="/" class="active">${icons.home}<span>Home</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile">${icons.profile}<span>Profile</span></a></div>`;
+        const bottomNav = `<div class="bottom-nav"><a href="/" class="active">${icons.home}<span>Home</span></a><a href="/students">${icons.students}<span>Students</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile">${icons.profile}<span>Profile</span></a></div>`;
 
         res.send(`
             <html><head>
