@@ -15,59 +15,9 @@ const moodIcons = {
 };
 
 // ===== 16 OBJECT SVG SCENES =====
-const postImages = {
-    mountain: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="mSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#bfdbfe"/><stop offset="100%" stop-color="#fef3c7"/></linearGradient></defs><rect width="100" height="100" fill="url(#mSky)"/><circle cx="72" cy="22" r="9" fill="#fbbf24"/><circle cx="72" cy="22" r="5.5" fill="#fde68a"/><path d="M0 68 L20 38 L38 65 L58 40 L78 70 L100 48 L100 100 L0 100 Z" fill="#64748b"/><path d="M0 78 L22 55 L42 78 L62 58 L82 82 L100 68 L100 100 L0 100 Z" fill="#334155"/></svg>`,
-    sunrise: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="srSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fbbf24"/><stop offset="60%" stop-color="#f97316"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><rect width="100" height="100" fill="url(#srSky)"/><circle cx="50" cy="62" r="18" fill="#fef3c7" opacity="0.5"/><circle cx="50" cy="62" r="13" fill="#fef3c7"/><rect y="70" width="100" height="30" fill="#7c2d12" opacity="0.4"/></svg>`,
-    moon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="moSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0c1445"/><stop offset="100%" stop-color="#3730a3"/></linearGradient></defs><rect width="100" height="100" fill="url(#moSky)"/><circle cx="60" cy="42" r="18" fill="#fef3c7"/><circle cx="70" cy="35" r="16" fill="#0c1445"/><circle cx="20" cy="18" r="1" fill="#fef3c7"/><circle cx="38" cy="10" r="0.7" fill="#fef3c7" opacity="0.8"/><circle cx="82" cy="20" r="1.2" fill="#fef3c7"/><circle cx="15" cy="55" r="0.8" fill="#fef3c7" opacity="0.7"/><circle cx="88" cy="60" r="0.9" fill="#fef3c7" opacity="0.8"/></svg>`,
-    cloud: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="clSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#bfdbfe"/></linearGradient></defs><rect width="100" height="100" fill="url(#clSky)"/><ellipse cx="35" cy="42" rx="22" ry="14" fill="#fff" opacity="0.95"/><ellipse cx="22" cy="45" rx="14" ry="10" fill="#fff" opacity="0.95"/><ellipse cx="50" cy="46" rx="14" ry="10" fill="#fff" opacity="0.95"/><ellipse cx="72" cy="60" rx="18" ry="11" fill="#fff" opacity="0.85"/></svg>`,
-    tree: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="trSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fb923c"/><stop offset="100%" stop-color="#fde68a"/></linearGradient></defs><rect width="100" height="100" fill="url(#trSky)"/><circle cx="75" cy="28" r="10" fill="#fef3c7" opacity="0.8"/><rect y="82" width="100" height="18" fill="#166534" opacity="0.7"/><rect x="48" y="72" width="4" height="14" fill="#451a03"/><polygon points="50,22 30,55 70,55" fill="#15803d"/><polygon points="50,38 32,68 68,68" fill="#166534"/><polygon points="50,52 34,80 66,80" fill="#14532d"/></svg>`,
-    waves: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="wvSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="50%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#0284c7"/></linearGradient></defs><rect width="100" height="100" fill="url(#wvSky)"/><circle cx="50" cy="35" r="12" fill="#fef3c7" opacity="0.6"/><path d="M0 55 Q25 45 50 55 Q75 65 100 55 L100 100 L0 100 Z" fill="#0891b2"/><path d="M0 68 Q25 58 50 68 Q75 78 100 68 L100 100 L0 100 Z" fill="#0369a1"/><path d="M0 82 Q25 72 50 82 Q75 92 100 82 L100 100 L0 100 Z" fill="#075985"/></svg>`,
-    star: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="stSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs><rect width="100" height="100" fill="url(#stSky)"/><circle cx="50" cy="50" r="20" fill="#fef3c7" opacity="0.15"/><path d="M50 22 L56 42 L78 42 L60 55 L67 77 L50 64 L33 77 L40 55 L22 42 L44 42 Z" fill="#fef3c7"/></svg>`,
-    rainbow: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="rbSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#dbeafe"/><stop offset="100%" stop-color="#fef3c7"/></linearGradient></defs><rect width="100" height="100" fill="url(#rbSky)"/><path d="M10 82 A40 40 0 0 1 90 82" fill="none" stroke="#dc2626" stroke-width="5"/><path d="M15 82 A35 35 0 0 1 85 82" fill="none" stroke="#ea580c" stroke-width="5"/><path d="M20 82 A30 30 0 0 1 80 82" fill="none" stroke="#facc15" stroke-width="5"/><path d="M25 82 A25 25 0 0 1 75 82" fill="none" stroke="#16a34a" stroke-width="5"/><path d="M30 82 A20 20 0 0 1 70 82" fill="none" stroke="#0284c7" stroke-width="5"/><path d="M35 82 A15 15 0 0 1 65 82" fill="none" stroke="#7c3aed" stroke-width="5"/></svg>`,
-    snow: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="snSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e3a8a"/><stop offset="100%" stop-color="#60a5fa"/></linearGradient></defs><rect width="100" height="100" fill="url(#snSky)"/><circle cx="50" cy="50" r="35" fill="#fff" opacity="0.1"/><g stroke="#f0f9ff" stroke-width="2.5" stroke-linecap="round" fill="none" transform="translate(50,50)"><line x1="0" y1="-30" x2="0" y2="30"/><line x1="-26" y1="-15" x2="26" y2="15"/><line x1="-26" y1="15" x2="26" y2="-15"/><path d="M0 -30 L-7 -22 M0 -30 L7 -22"/><path d="M0 30 L-7 22 M0 30 L7 22"/><path d="M-26 -15 L-15 -20 M-26 -15 L-20 -6"/><path d="M26 15 L15 20 M26 15 L20 6"/></g><circle cx="50" cy="50" r="4" fill="#f0f9ff"/></svg>`,
-    flame: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="flSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1c1917"/><stop offset="100%" stop-color="#7c2d12"/></linearGradient></defs><rect width="100" height="100" fill="url(#flSky)"/><path d="M50 15 Q38 35 42 50 Q36 48 34 42 Q28 55 36 72 Q42 82 50 82 Q58 82 64 72 Q72 55 66 42 Q64 48 58 50 Q62 35 50 15 Z" fill="#ea580c"/><path d="M50 32 Q44 45 46 55 Q42 54 41 50 Q38 60 44 70 Q48 76 50 76 Q52 76 56 70 Q62 60 59 50 Q58 54 54 55 Q56 45 50 32 Z" fill="#fbbf24"/><path d="M50 48 Q47 56 48 62 Q46 61 46 58 Q44 65 48 71 Q49 73 50 73 Q51 73 52 71 Q56 65 54 58 Q54 61 52 62 Q53 56 50 48 Z" fill="#fef3c7"/></svg>`,
-    coffee: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="cfSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fde68a"/><stop offset="100%" stop-color="#b45309"/></linearGradient></defs><rect width="100" height="100" fill="url(#cfSky)"/><rect y="80" width="100" height="20" fill="#451a03" opacity="0.5"/><ellipse cx="50" cy="78" rx="32" ry="4" fill="#fff" opacity="0.9"/><path d="M26 52 L30 76 Q50 80 70 76 L74 52 Z" fill="#fff" stroke="#78350f" stroke-width="1.5"/><ellipse cx="50" cy="52" rx="24" ry="5" fill="#fff" stroke="#78350f" stroke-width="1.5"/><ellipse cx="50" cy="52" rx="20" ry="4" fill="#78350f"/><ellipse cx="50" cy="51" rx="16" ry="3" fill="#451a03"/><path d="M74 58 Q86 58 88 66 Q88 74 76 74" stroke="#78350f" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M40 42 Q38 34 42 28 Q44 23 42 16" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.85"/><path d="M50 38 Q48 30 52 24 Q54 18 52 12" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.95"/><path d="M60 42 Q58 34 62 28 Q64 23 62 16" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.85"/></svg>`,
-    book: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="bkSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fef3c7"/><stop offset="100%" stop-color="#fcd34d"/></linearGradient></defs><rect width="100" height="100" fill="url(#bkSky)"/><circle cx="50" cy="50" r="30" fill="#fff" opacity="0.4"/><path d="M50 32 Q36 24 18 28 L18 76 Q36 72 50 80 Z" fill="#fff" stroke="#78350f" stroke-width="1.5"/><path d="M50 32 Q64 24 82 28 L82 76 Q64 72 50 80 Z" fill="#fff" stroke="#78350f" stroke-width="1.5"/><line x1="50" y1="32" x2="50" y2="80" stroke="#78350f" stroke-width="1.5"/><line x1="26" y1="40" x2="44" y2="38" stroke="#94a3b8" stroke-width="1"/><line x1="26" y1="46" x2="44" y2="44" stroke="#94a3b8" stroke-width="1"/><line x1="26" y1="52" x2="44" y2="50" stroke="#94a3b8" stroke-width="1"/><line x1="56" y1="38" x2="74" y2="40" stroke="#94a3b8" stroke-width="1"/><line x1="56" y1="44" x2="74" y2="46" stroke="#94a3b8" stroke-width="1"/><line x1="56" y1="50" x2="74" y2="52" stroke="#94a3b8" stroke-width="1"/></svg>`,
-    music: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="hpSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#581c87"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><rect width="100" height="100" fill="url(#hpSky)"/><circle cx="50" cy="50" r="32" fill="#c4b5fd" opacity="0.15"/><path d="M22 55 Q22 22 50 22 Q78 22 78 55" stroke="#c4b5fd" stroke-width="5" fill="none" stroke-linecap="round"/><rect x="14" y="52" width="16" height="30" rx="8" fill="#8b5cf6" stroke="#e9d5ff" stroke-width="1.5"/><rect x="70" y="52" width="16" height="30" rx="8" fill="#8b5cf6" stroke="#e9d5ff" stroke-width="1.5"/><circle cx="22" cy="67" r="4" fill="#e9d5ff"/><circle cx="78" cy="67" r="4" fill="#e9d5ff"/></svg>`,
-    travel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="trSky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="60%" stop-color="#93c5fd"/><stop offset="100%" stop-color="#fbbf24"/></linearGradient></defs><rect width="100" height="100" fill="url(#trSky2)"/><circle cx="78" cy="25" r="10" fill="#fef3c7" opacity="0.9"/><ellipse cx="18" cy="20" rx="11" ry="4" fill="#fff" opacity="0.8"/><path d="M0 82 L20 60 L40 82 L60 62 L80 82 L100 68 L100 100 L0 100 Z" fill="#334155"/><g transform="translate(52, 42) rotate(-15)"><path d="M-18 0 L10 -6 L16 0 L10 6 Z" fill="#fff" stroke="#0284c7" stroke-width="1"/><path d="M0 -1 L2 -14 L5 -1 Z" fill="#0284c7"/><path d="M0 1 L2 14 L5 1 Z" fill="#0284c7"/></g></svg>`,
-    leaf: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="lfSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#dcfce7"/><stop offset="100%" stop-color="#86efac"/></linearGradient></defs><rect width="100" height="100" fill="url(#lfSky)"/><circle cx="50" cy="50" r="32" fill="#fff" opacity="0.3"/><path d="M50 82 Q22 65 22 42 Q22 24 50 18 Q78 24 78 42 Q78 65 50 82 Z" fill="#15803d"/><path d="M50 82 Q50 60 50 30" stroke="#14532d" stroke-width="1.5" fill="none"/><path d="M50 55 Q38 52 32 42" stroke="#14532d" stroke-width="1" fill="none"/><path d="M50 55 Q62 52 68 42" stroke="#14532d" stroke-width="1" fill="none"/></svg>`,
-    heart: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="hrSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fce7f3"/><stop offset="100%" stop-color="#f9a8d4"/></linearGradient></defs><rect width="100" height="100" fill="url(#hrSky)"/><path d="M50 82 C20 62 18 42 30 32 C40 24 48 30 50 36 C52 30 60 24 70 32 C82 42 80 62 50 82 Z" fill="#ec4899"/><ellipse cx="38" cy="42" rx="5" ry="3" fill="#fff" opacity="0.5"/></svg>`,
-    desert: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="dsSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fdba74"/><stop offset="60%" stop-color="#fb923c"/><stop offset="100%" stop-color="#f97316"/></linearGradient></defs><rect width="100" height="100" fill="url(#dsSky)"/><circle cx="78" cy="28" r="10" fill="#fef3c7" opacity="0.9"/><path d="M0 72 Q30 60 60 72 Q80 80 100 68 L100 100 L0 100 Z" fill="#c2410c"/><path d="M0 82 Q30 72 60 82 Q80 88 100 80 L100 100 L0 100 Z" fill="#9a3412"/><rect x="28" y="52" width="6" height="32" rx="3" fill="#15803d"/><rect x="20" y="60" width="6" height="4" rx="2" fill="#15803d"/><rect x="18" y="48" width="6" height="16" rx="3" fill="#15803d"/><rect x="38" y="58" width="6" height="4" rx="2" fill="#15803d"/><rect x="42" y="46" width="6" height="16" rx="3" fill="#15803d"/></svg>`,
-    aurora: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="auSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0c1445"/><stop offset="100%" stop-color="#1e1b4b"/></linearGradient><linearGradient id="auGlow" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4ade80" stop-opacity="0.7"/><stop offset="100%" stop-color="#4ade80" stop-opacity="0"/></linearGradient></defs><rect width="100" height="100" fill="url(#auSky)"/><circle cx="20" cy="15" r="0.8" fill="#fff"/><circle cx="80" cy="22" r="1" fill="#fff"/><circle cx="55" cy="12" r="0.7" fill="#fff"/><circle cx="35" cy="20" r="0.6" fill="#fff"/><path d="M0 55 Q30 25 60 55 Q75 70 100 45 L100 75 Q75 90 60 75 Q30 45 0 75 Z" fill="url(#auGlow)"/><path d="M0 70 Q25 45 55 70 Q75 82 100 60 L100 100 L0 100 Z" fill="#0f172a"/></svg>`,
-    ocean: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="ocSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0891b2"/><stop offset="100%" stop-color="#082f49"/></linearGradient></defs><rect width="100" height="100" fill="url(#ocSky)"/><circle cx="70" cy="25" r="8" fill="#fef3c7" opacity="0.15"/><circle cx="70" cy="25" r="3" fill="#fef3c7" opacity="0.3"/><path d="M40 55 Q48 48 56 55 Q48 62 40 55 Z" fill="#fb923c"/><path d="M40 55 L34 48 L34 62 Z" fill="#fb923c"/><circle cx="52" cy="53" r="1" fill="#1e293b"/><circle cx="60" cy="42" r="1.5" fill="#fff" opacity="0.4"/><circle cx="63" cy="38" r="1" fill="#fff" opacity="0.3"/><circle cx="65" cy="34" r="0.8" fill="#fff" opacity="0.25"/></svg>`,
-    forest: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="foSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a7f3d0"/><stop offset="100%" stop-color="#10b981"/></linearGradient></defs><rect width="100" height="100" fill="url(#foSky)"/><polygon points="15,45 8,72 22,72" fill="#065f46" opacity="0.6"/><polygon points="35,38 26,72 44,72" fill="#064e3b" opacity="0.7"/><polygon points="65,42 56,72 74,72" fill="#065f46" opacity="0.7"/><polygon points="85,48 78,72 92,72" fill="#064e3b" opacity="0.6"/><polygon points="25,30 12,80 38,80" fill="#065f46"/><polygon points="50,22 34,80 66,80" fill="#064e3b"/><polygon points="75,32 62,80 88,80" fill="#065f46"/><rect y="80" width="100" height="20" fill="#022c22"/></svg>`,
-    meadow: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="meSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#bae6fd"/><stop offset="60%" stop-color="#dbeafe"/><stop offset="100%" stop-color="#86efac"/></linearGradient></defs><rect width="100" height="100" fill="url(#meSky)"/><ellipse cx="30" cy="55" rx="18" ry="6" fill="#22c55e"/><ellipse cx="75" cy="62" rx="22" ry="7" fill="#16a34a"/><ellipse cx="50" cy="72" rx="30" ry="8" fill="#15803d"/><g fill="#f472b6"><circle cx="20" cy="60" r="2.5"/><circle cx="35" cy="68" r="2"/><circle cx="55" cy="65" r="2.5"/><circle cx="70" cy="58" r="2"/><circle cx="82" cy="70" r="2.5"/></g><g fill="#fef3c7"><circle cx="20" cy="60" r="1"/><circle cx="35" cy="68" r="0.8"/><circle cx="55" cy="65" r="1"/><circle cx="70" cy="58" r="0.8"/><circle cx="82" cy="70" r="1"/></g></svg>`,
-    rain: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="rnSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#475569"/><stop offset="100%" stop-color="#94a3b8"/></linearGradient></defs><rect width="100" height="100" fill="url(#rnSky)"/><g fill="#e2e8f0" opacity="0.6"><ellipse cx="20" cy="25" rx="2" ry="4"/><ellipse cx="35" cy="40" rx="2.5" ry="5"/><ellipse cx="55" cy="20" rx="2" ry="4"/><ellipse cx="70" cy="45" rx="2.5" ry="5"/><ellipse cx="85" cy="30" rx="2" ry="4"/><ellipse cx="15" cy="60" rx="2" ry="4.5"/><ellipse cx="45" cy="65" rx="2.5" ry="5"/><ellipse cx="65" cy="70" rx="2" ry="4"/><ellipse cx="80" cy="72" rx="2.5" ry="5"/></g><g fill="#fff" opacity="0.4"><circle cx="19" cy="22" r="0.7"/><circle cx="34" cy="36" r="0.9"/><circle cx="54" cy="17" r="0.7"/><circle cx="69" cy="41" r="0.9"/><circle cx="84" cy="26" r="0.7"/></g></svg>`,
-    candle: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="cdGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#fbbf24" stop-opacity="0.8"/><stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/></radialGradient><linearGradient id="cdBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0c0a09"/><stop offset="100%" stop-color="#44403c"/></linearGradient></defs><rect width="100" height="100" fill="url(#cdBg)"/><circle cx="50" cy="45" r="40" fill="url(#cdGlow)"/><rect x="42" y="55" width="16" height="30" fill="#fef3c7"/><rect x="42" y="55" width="16" height="4" fill="#e7e5e4"/><ellipse cx="50" cy="55" rx="8" ry="2" fill="#e7e5e4"/><rect x="49" y="48" width="2" height="7" fill="#1c1917"/><path d="M50 30 Q46 42 50 47 Q54 42 50 30 Z" fill="#fbbf24"/><path d="M50 36 Q48 43 50 46 Q52 43 50 36 Z" fill="#fef3c7"/></svg>`,
-    city: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="ctSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="60%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#fb7185"/></linearGradient></defs><rect width="100" height="100" fill="url(#ctSky)"/><circle cx="78" cy="22" r="6" fill="#fef3c7" opacity="0.9"/><rect x="5" y="55" width="12" height="45" fill="#1e293b"/><rect x="20" y="42" width="10" height="58" fill="#0f172a"/><rect x="33" y="60" width="14" height="40" fill="#1e293b"/><rect x="50" y="35" width="12" height="65" fill="#0f172a"/><rect x="65" y="50" width="10" height="50" fill="#1e293b"/><rect x="78" y="48" width="14" height="52" fill="#0f172a"/><g fill="#fbbf24" opacity="0.9"><rect x="8" y="60" width="2" height="3"/><rect x="13" y="60" width="2" height="3"/><rect x="8" y="68" width="2" height="3"/><rect x="23" y="48" width="2" height="3"/><rect x="27" y="48" width="2" height="3"/><rect x="23" y="56" width="2" height="3"/><rect x="36" y="65" width="2" height="3"/><rect x="41" y="65" width="2" height="3"/><rect x="36" y="73" width="2" height="3"/><rect x="54" y="42" width="2" height="3"/><rect x="58" y="42" width="2" height="3"/><rect x="54" y="52" width="2" height="3"/><rect x="58" y="52" width="2" height="3"/><rect x="68" y="56" width="2" height="3"/><rect x="68" y="64" width="2" height="3"/><rect x="82" y="54" width="2" height="3"/><rect x="87" y="54" width="2" height="3"/><rect x="82" y="62" width="2" height="3"/><rect x="87" y="62" width="2" height="3"/></g></svg>`
-};
+const { images: postImages, labels: imageLabels } = require('../lib/svg-library');
 
-const imageLabels = {
-    mountain: 'Mountain',
-    sunrise: 'Sunrise',
-    moon: 'Moon',
-    cloud: 'Cloud',
-    tree: 'Tree',
-    waves: 'Waves',
-    star: 'Star',
-    rainbow: 'Rainbow',
-    snow: 'Snow',
-    flame: 'Flame',
-    coffee: 'Coffee',
-    book: 'Book',
-    music: 'Music',
-    travel: 'Travel',
-    leaf: 'Leaf',
-    heart: 'Heart',
-    desert: 'Desert',
-    aurora: 'Aurora',
-    ocean: 'Ocean',
-    forest: 'Forest',
-    meadow: 'Meadow',
-    rain: 'Rain',
-    candle: 'Candle',
-    city: 'City'
-};
+
 
 const icons = {
     home: `<svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>`,
@@ -83,6 +33,168 @@ const icons = {
 function getBottomNav(active) {
     return `<div class="bottom-nav"><a href="/" class="${active === 'home' ? 'active' : ''}">${icons.home}<span>Home</span></a><a href="/post/create" class="${active === 'post' ? 'active' : ''}">${icons.plus}<span>Post</span></a><a href="/chat" class="${active === 'chat' ? 'active' : ''}">${icons.chat}<span>Chat</span></a><a href="/profile" class="${active === 'profile' ? 'active' : ''}">${icons.profile}<span>Profile</span></a></div>`;
 }
+
+// ===== NEW POST PAGE =====
+router.get('/create', (req, res) => {
+    const selectedImage = req.query.image || 'none';
+    let attachPreview = '';
+    if (selectedImage !== 'none' && postImages[selectedImage]) {
+        attachPreview = `
+            <div class="attached-preview">
+                <div class="attached-preview-icon">${postImages[selectedImage]}</div>
+                <div class="attached-preview-info">
+                    <div class="attached-preview-label">${imageLabels[selectedImage]}</div>
+                    <a href="/post/create" class="attached-preview-remove">Remove</a>
+                </div>
+            </div>
+        `;
+    }
+
+    res.send(`
+        <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
+        <div class="container">
+            <header><a href="/" class="header-icon" title="Back">${icons.back}</a><span class="profile-title" style="flex:1;">New Post</span></header>
+            <div class="form-card">
+                <form action="/post/create" method="POST">
+                    <div class="form-group">
+                        <label>Your thoughts (Max 300 characters)</label>
+                        <textarea name="body" rows="6" maxlength="300" required placeholder="What's on your mind?"></textarea>
+                    </div>
+                    <input type="hidden" name="post_image" value="${selectedImage}">
+
+                    <div class="form-group">
+                        <label>Attach an Icon</label>
+                        ${attachPreview}
+                        <a href="/post/svg-library?current=${selectedImage}" class="attach-svg-btn">
+                            ${icons.image}
+                            <span>${selectedImage === 'none' ? 'Attach SVG' : 'Change SVG'}</span>
+                        </a>
+                    </div>
+
+                    <button type="submit" class="btn-full">Post</button>
+                </form>
+            </div>
+        </div>
+        ${getBottomNav('post')}
+        </body></html>
+    `);
+});
+
+// ===== SVG LIBRARY PAGE =====
+router.get('/svg-library', (req, res) => {
+    const currentImage = req.query.current || 'none';
+    const fromEdit = req.query.from === 'edit' ? 'edit' : 'create';
+    const postId = req.query.postId || '';
+
+    const { images: postImages, labels: imageLabels, categories } = require('../lib/svg-library');
+
+    const baseUrl = (key) => {
+        if (fromEdit === 'edit') {
+            return `/post/edit/${postId}?image=${key}`;
+        }
+        return `/post/create?image=${key}`;
+    };
+
+    let libraryHtml = '';
+    // None option first
+    libraryHtml += `
+        <a href="${baseUrl('none')}" class="library-item ${currentImage === 'none' ? 'library-selected' : ''}" data-name="none">
+            <div class="library-icon none-icon">${icons.close}</div>
+            <span class="library-label">None</span>
+        </a>
+    `;
+
+    // Group by category
+    Object.keys(categories).forEach(cat => {
+        const keys = categories[cat];
+        libraryHtml += `<h3 class="library-cat-title" data-cat="${cat}">${cat}</h3>`;
+        keys.forEach(key => {
+            if (!postImages[key]) return;
+            const selected = currentImage === key ? 'library-selected' : '';
+            const name = (imageLabels[key] || key).toLowerCase();
+            libraryHtml += `
+                <a href="${baseUrl(key)}" class="library-item ${selected}" data-name="${name}" data-cat="${cat}">
+                    <div class="library-icon">${postImages[key]}</div>
+                    <span class="library-label">${imageLabels[key] || key}</span>
+                </a>
+            `;
+        });
+    });
+
+    // Category tabs
+    let catTabsHtml = `<button type="button" class="lib-tab active" onclick="libFilter('all', this)">All</button>`;
+    Object.keys(categories).forEach(cat => {
+        catTabsHtml += `<button type="button" class="lib-tab" onclick="libFilter('${cat}', this)">${cat}</button>`;
+    });
+
+    const backUrl = fromEdit === 'edit' ? `/post/edit/${postId}` : `/post/create${currentImage !== 'none' ? '?image=' + currentImage : ''}`;
+
+    res.send(`
+        <html><head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/style.css">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
+        <title>SVG Library - EliGet</title>
+        </head><body>
+        <div class="container">
+            <header class="feed-header">
+                <a href="${backUrl}" class="header-icon" title="Back">${icons.back}</a>
+                <h1 class="feed-title" style="margin-left:10px;">SVG Library</h1>
+            </header>
+
+            <form class="sp-search-form" onsubmit="return false;">
+                <input type="text" id="libSearch" class="sp-search-input" placeholder="Search by name..." autocomplete="off">
+            </form>
+
+            <div class="sp-chips lib-tabs">${catTabsHtml}</div>
+
+            <div class="library-grid" id="libraryGrid">${libraryHtml}</div>
+            <p class="lib-empty" id="libEmpty" style="display:none;">No SVG found.</p>
+        </div>
+        <script>
+            var activeCat = 'all';
+            var libSearch = document.getElementById('libSearch');
+            var items = document.querySelectorAll('.library-item');
+            var catTitles = document.querySelectorAll('.library-cat-title');
+            var libEmpty = document.getElementById('libEmpty');
+
+            function applyFilter() {
+                var q = (libSearch.value || '').toLowerCase().trim();
+                var visible = 0;
+                items.forEach(function(it) {
+                    var name = it.getAttribute('data-name') || '';
+                    var cat = it.getAttribute('data-cat') || '';
+                    var catOk = (activeCat === 'all') || (cat === activeCat) || (name === 'none' && activeCat === 'all');
+                    var searchOk = !q || name.indexOf(q) !== -1;
+                    if (catOk && searchOk) {
+                        it.style.display = '';
+                        if (name !== 'none') visible++;
+                    } else {
+                        it.style.display = 'none';
+                    }
+                });
+                // Show/hide category titles
+                catTitles.forEach(function(t) {
+                    var tCat = t.getAttribute('data-cat');
+                    if (activeCat === 'all' && !q) t.style.display = '';
+                    else t.style.display = 'none';
+                });
+                libEmpty.style.display = (visible === 0 && q) ? 'block' : 'none';
+            }
+
+            function libFilter(cat, btn) {
+                activeCat = cat;
+                document.querySelectorAll('.lib-tab').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                applyFilter();
+            }
+
+            if (libSearch) libSearch.addEventListener('input', applyFilter);
+        </script>
+        </body></html>
+    `);
+});
 
 // ===== NEW POST PAGE =====
 router.get('/create', (req, res) => {
@@ -290,3 +402,4 @@ router.post('/delete/:id', async (req, res) => {
 
 module.exports = router;
 module.exports.postImages = postImages;
+module.exports.imageLabels = imageLabels;
