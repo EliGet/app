@@ -111,6 +111,7 @@ router.get('/', async (req, res) => {
                             <span class="sp-type-badge ${typeClass}">${TYPE_LABELS[p.type] || p.type}</span>
                         </div>
                         ${p.title ? `<h3 class="sp-card-title">${escapeHtml(p.title)}</h3>` : ''}
+                        ${(p.svgs && p.svgs.length && svgLib.images[p.svgs[0]]) ? `<div class="sp-card-svg">${svgLib.images[p.svgs[0]]}</div>` : ''}
                         ${preview ? `<p class="sp-card-preview">${escapeHtml(preview)}</p>` : ''}
                         <div class="sp-card-footer">
                             <span class="sp-subject-chip">${escapeHtml(p.subject)}</span>
@@ -167,6 +168,12 @@ router.get('/', async (req, res) => {
     }
 });
 
+// SVG LIBRARY API (JSON for modal picker)
+router.get('/api/svgs', (req, res) => {
+    const { images, labels, categories } = require('../lib/svg-library');
+    res.json({ images: images, labels: labels, categories: categories });
+});
+
 // NEW POST PAGE
 router.get('/new', async (req, res) => {
     let typeOptionsHtml = '';
@@ -212,6 +219,22 @@ router.get('/new', async (req, res) => {
                     <textarea name="body" rows="8" maxlength="2000" placeholder="Write here..." class="sp-textarea"></textarea>
                 </div>
 
+                <div class="form-group">
+                    <label class="sp-label">Decoration SVG (optional)</label>
+                    <input type="hidden" name="svg" id="svgInput" value="none">
+                    <div id="svgPreview" class="sp-svg-preview" style="display:none;">
+                        <div class="sp-svg-preview-icon" id="svgPreviewIcon"></div>
+                        <div class="sp-svg-preview-info">
+                            <div class="sp-svg-preview-label" id="svgPreviewLabel">SVG</div>
+                            <button type="button" class="sp-svg-remove" onclick="clearSvg()">Remove</button>
+                        </div>
+                    </div>
+                    <button type="button" class="sp-svg-attach" onclick="openSvgModal()">
+                        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/></svg>
+                        <span id="svgAttachLabel">Attach SVG</span>
+                    </button>
+                </div>
+
                 <div class="form-group" id="optionsBlock" style="display:none;">
                     <label class="sp-label">Options (2-6)</label>
                     <div id="optionsList">
@@ -228,6 +251,24 @@ router.get('/new', async (req, res) => {
             </form>
         </div>
         ${getBottomNav('students')}
+
+        <div class="sp-svg-modal" id="svgModal">
+            <div class="sp-svg-modal-inner">
+                <div class="sp-svg-modal-head">
+                    <span class="sp-svg-modal-title">Choose a decoration</span>
+                    <button type="button" class="sp-svg-modal-close" onclick="closeSvgModal()" aria-label="Close">
+                        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>
+                    </button>
+                </div>
+                <div class="sp-svg-modal-search">
+                    <input type="text" id="svgSearch" class="sp-search-input" placeholder="Search SVG..." autocomplete="off">
+                </div>
+                <div class="sp-chips sp-svg-modal-tabs" id="svgTabs"></div>
+                <div class="sp-svg-modal-grid" id="svgGrid"></div>
+                <div class="sp-svg-modal-empty" id="svgEmpty" style="display:none;">No SVG found.</div>
+            </div>
+        </div>
+
         <script>
             var typeRadios = document.querySelectorAll('input[name="type"]');
             var optionsBlock = document.getElementById('optionsBlock');
@@ -238,6 +279,115 @@ router.get('/new', async (req, res) => {
             }
             typeRadios.forEach(function(r) { r.addEventListener('change', updateOptionsVisibility); });
             updateOptionsVisibility();
+
+            var svgLibrary = null;
+            var svgActiveCat = 'all';
+
+            function openSvgModal() {
+                var modal = document.getElementById('svgModal');
+                modal.classList.add('open');
+                document.body.style.overflow = 'hidden';
+                if (!svgLibrary) {
+                    fetch('/students/api/svgs', { credentials: 'same-origin' })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            svgLibrary = data;
+                            renderSvgTabs();
+                            renderSvgGrid();
+                        })
+                        .catch(function() {
+                            document.getElementById('svgGrid').innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#94a3b8;padding:20px;">Could not load library.</p>';
+                        });
+                }
+            }
+
+            function closeSvgModal() {
+                document.getElementById('svgModal').classList.remove('open');
+                document.body.style.overflow = '';
+            }
+
+            function renderSvgTabs() {
+                var tabs = document.getElementById('svgTabs');
+                var html = '<button type="button" class="lib-tab active" data-cat="all" onclick="pickSvgCat(this)">All</button>';
+                Object.keys(svgLibrary.categories).forEach(function(cat) {
+                    html += '<button type="button" class="lib-tab" data-cat="' + cat + '" onclick="pickSvgCat(this)">' + cat + '</button>';
+                });
+                tabs.innerHTML = html;
+            }
+
+            function pickSvgCat(btn) {
+                var cat = btn.getAttribute('data-cat') || 'all';
+                svgActiveCat = cat;
+                document.querySelectorAll('#svgTabs .lib-tab').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                var si = document.getElementById('svgSearch');
+                if (si) si.value = '';
+                renderSvgGrid();
+            }
+
+            function renderSvgGrid() {
+                if (!svgLibrary) return;
+                var q = (document.getElementById('svgSearch').value || '').toLowerCase().trim();
+                var grid = document.getElementById('svgGrid');
+                var empty = document.getElementById('svgEmpty');
+                var items = [];
+
+                Object.keys(svgLibrary.categories).forEach(function(cat) {
+                    if (svgActiveCat !== 'all' && cat !== svgActiveCat) return;
+                    svgLibrary.categories[cat].forEach(function(key) {
+                        var label = svgLibrary.labels[key] || key;
+                        if (q && label.toLowerCase().indexOf(q) === -1 && key.toLowerCase().indexOf(q) === -1) return;
+                        items.push({ key: key, label: label, svg: svgLibrary.images[key] });
+                    });
+                });
+
+                if (items.length === 0) {
+                    grid.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+                empty.style.display = 'none';
+
+                var html = '';
+                items.forEach(function(it) {
+                    html += '<button type="button" class="sp-svg-tile" data-key="' + it.key + '" onclick="pickSvgFromTile(this)">'
+                        + '<div class="sp-svg-tile-icon">' + it.svg + '</div>'
+                        + '<span class="sp-svg-tile-label">' + it.label + '</span>'
+                        + '</button>';
+                });
+                grid.innerHTML = html;
+            }
+
+            function pickSvgFromTile(btn) {
+                var key = btn.getAttribute('data-key');
+                if (key) pickSvg(key);
+            }
+
+            function pickSvg(key) {
+                if (!svgLibrary) return;
+                document.getElementById('svgInput').value = key;
+                document.getElementById('svgPreviewIcon').innerHTML = svgLibrary.images[key];
+                document.getElementById('svgPreviewLabel').textContent = svgLibrary.labels[key] || key;
+                document.getElementById('svgPreview').style.display = 'flex';
+                document.getElementById('svgAttachLabel').textContent = 'Change SVG';
+                closeSvgModal();
+            }
+
+            function clearSvg() {
+                document.getElementById('svgInput').value = 'none';
+                document.getElementById('svgPreview').style.display = 'none';
+                document.getElementById('svgAttachLabel').textContent = 'Attach SVG';
+            }
+
+            var searchInput = document.getElementById('svgSearch');
+            if (searchInput) searchInput.addEventListener('input', renderSvgGrid);
+
+            var svgModalEl = document.getElementById('svgModal');
+            if (svgModalEl) {
+                svgModalEl.addEventListener('click', function(e) {
+                    if (e.target === this) closeSvgModal();
+                });
+            }
         </script>
         </body></html>
     `);
@@ -273,7 +423,10 @@ router.post('/create', async (req, res) => {
             subject: SUBJECTS.includes(subject) ? subject : 'General',
             title: String(title).slice(0, 100),
             body: String(body).slice(0, 2000),
-            svgs: [],
+            svgs: (function() {
+                var k = (req.body.svg || 'none').trim();
+                return (k && k !== 'none') ? [k] : [];
+            })(),
             options: options,
             votes: {},
             helpfulCount: 0,
@@ -371,6 +524,7 @@ router.get('/:id', async (req, res) => {
                         </div>
                     </div>
                     ${post.title ? `<h2 class="sp-detail-title">${escapeHtml(post.title)}</h2>` : ''}
+                    ${(post.svgs && post.svgs.length && svgLib.images[post.svgs[0]]) ? `<div class="sp-detail-svg">${svgLib.images[post.svgs[0]]}</div>` : ''}
                     ${bodyHtml}
                     ${optionsHtml}
                     <div class="sp-detail-actions">

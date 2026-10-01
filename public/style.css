@@ -6087,3 +6087,245 @@ a.chat-header-user:active {
     .library-grid { gap: 8px; }
     .library-label { font-size: 0.68rem; }
 }
+
+/* ===== Students SVG picker v1 ===== */
+.sp-svg-attach {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 18px;
+    background: #f8fafc;
+    color: #0f172a;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.sp-svg-attach:hover { background: #fff; border-color: #94a3b8; }
+.sp-svg-attach svg { color: #64748b; }
+
+.sp-svg-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+.sp-svg-preview-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+}
+.sp-svg-preview-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+.sp-svg-preview-info {
+    flex: 1;
+    min-width: 0;
+}
+.sp-svg-preview-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+.sp-svg-remove {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #dc2626;
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: underline;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Modal */
+.sp-svg-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+}
+.sp-svg-modal.open { display: flex; }
+
+.sp-svg-modal-inner {
+    background: #f8fafc;
+    width: 100%;
+    max-width: 600px;
+    height: 85vh;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 -8px 30px rgba(15,23,42,0.2);
+}
+
+.sp-svg-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #fff;
+}
+.sp-svg-modal-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.2px;
+}
+.sp-svg-modal-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.sp-svg-modal-close:hover { background: #f1f5f9; color: #0f172a; }
+.sp-svg-modal-close svg { fill: currentColor; }
+
+.sp-svg-modal-search {
+    padding: 12px 20px 8px;
+    background: #fff;
+}
+.sp-svg-modal-tabs {
+    padding: 8px 20px 12px;
+    background: #fff;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 0 !important;
+}
+
+.sp-svg-modal-grid {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    align-content: start;
+}
+.sp-svg-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 6px;
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s ease, transform 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.sp-svg-tile:hover { border-color: #94a3b8; transform: translateY(-1px); }
+.sp-svg-tile:active { transform: scale(0.97); }
+.sp-svg-tile-icon {
+    width: 100%;
+    aspect-ratio: 1/1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f1f5f9;
+    margin-bottom: 6px;
+}
+.sp-svg-tile-icon svg { width: 100%; height: 100%; display: block; }
+.sp-svg-tile-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #334155;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+.sp-svg-modal-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    padding: 30px;
+}
+
+/* Card SVG (feed) */
+.sp-card-svg {
+    width: 100%;
+    max-width: 260px;
+    aspect-ratio: 16/10;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    margin: 6px 0 10px;
+}
+.sp-card-svg svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Detail SVG */
+.sp-detail-svg {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 1/1;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    margin: 8px auto 16px;
+}
+.sp-detail-svg svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+@media (max-width: 400px) {
+    .sp-svg-modal-inner { height: 90vh; }
+    .sp-svg-modal-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 16px; }
+}
+
+/* ===== SVG modal empty fix ===== */
+.sp-svg-modal-empty {
+    display: flex !important;
+    flex: 1 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    color: #94a3b8 !important;
+    font-size: 0.9rem !important;
+    padding: 40px 20px !important;
+    width: 100% !important;
+}
+.sp-svg-modal-empty[style*="display:none"] {
+    display: none !important;
+}
