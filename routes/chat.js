@@ -419,8 +419,11 @@ router.get('/notifications', async (req, res) => {
             `;
         }
 
-        // Mark all as seen
-        await Notification.updateMany({ recipient: me, seen: false }, { $set: { seen: true } });
+        // Delete follow/accepted notifications after user views them
+        await Notification.deleteMany({
+            recipient: me,
+            type: { $in: ['follow', 'friend_accepted'] }
+        });
 
         const hasAnything = pendingRequests.length > 0 || notifications.length > 0;
 
@@ -468,9 +471,21 @@ router.get('/notifications', async (req, res) => {
 // ===== ACCEPT REQUEST =====
 router.post('/accept/:id', async (req, res) => {
     try {
-        await FriendRequest.updateOne({ _id: req.params.id }, { status: 'accepted' });
-        res.redirect('/chat');
+        const me = req.session.user;
+        const fr = await FriendRequest.findById(req.params.id);
+        if (fr && fr.to === me) {
+            await FriendRequest.updateOne({ _id: req.params.id }, { status: 'accepted' });
+            // Notify sender that request was accepted
+            await Notification.create({
+                recipient: fr.from,
+                actor: me,
+                type: 'friend_accepted',
+                ref_id: fr._id.toString()
+            });
+        }
+        res.redirect('/chat/notifications');
     } catch (error) {
+        console.error('Accept error:', error);
         res.redirect('/chat');
     }
 });
