@@ -6444,3 +6444,19 @@ a.chat-header-user:active {
     font-variant-numeric: tabular-nums;
     margin-left: 10px;
 }
+
+/* ===== Notif avatar fix ===== */
+.nt-avatar {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    flex-shrink: 0 !important;
+    aspect-ratio: 1 / 1 !important;
+    border-radius: 50% !important;
+    box-sizing: border-box !important;
+}
+.nt-item,
+.nt-item-link {
+    align-items: center !important;
+}
