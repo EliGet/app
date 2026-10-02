@@ -22,6 +22,7 @@ const { linkify, linkifyPost, linkifyBio } = require('./lib/linkify');
 const User = require('./models/User');
 const Follow = require('./models/Follow');
 const Block = require('./models/Block');
+const Notification = require('./models/Notification');
 const Post = require('./models/Post');
 const StudentPost = require('./models/StudentPost');
 const FriendRequest = require('./models/FriendRequest');
@@ -1351,9 +1352,18 @@ app.post('/follow/:username', isAuthenticated, async (req, res) => {
         if (existing) {
             await Follow.deleteOne({ _id: existing._id });
             following = false;
+            // Remove associated notification
+            await Notification.deleteMany({ recipient: target, actor: me, type: 'follow' });
         } else {
             await Follow.create({ follower: me, following: target });
             following = true;
+            // Create notification
+            await Notification.create({
+                recipient: target,
+                actor: me,
+                type: 'follow',
+                ref_id: ''
+            });
         }
         const count = await Follow.countDocuments({ following: target });
         res.json({ ok: true, following: following, count: count });
@@ -1647,6 +1657,20 @@ app.get('/search', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error('Search error:', err);
         res.redirect('/');
+    }
+});
+
+// ===== NOTIFICATION SEEN (mark all as seen) =====
+app.post('/notifications/seen', isAuthenticated, async (req, res) => {
+    try {
+        await Notification.updateMany(
+            { recipient: req.session.user, seen: false },
+            { $set: { seen: true } }
+        );
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('Mark seen error:', err);
+        res.json({ ok: false });
     }
 });
 

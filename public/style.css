@@ -6422,3 +6422,25 @@ a.chat-header-user:active {
     flex-shrink: 0;
 }
 .feed-header .header-icon:hover { color: #0f172a; background: #f1f5f9; }
+
+/* ===== Notification consolidation ===== */
+.nt-item-link {
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.nt-item-link:hover { background: #f8fafc; }
+.nt-item-link:active { background: #f1f5f9; }
+.nt-item-link.unread { background: #f8fafc; }
+.nt-item-link.unread .nt-name { font-weight: 800; }
+.nt-item-link.unread .nt-username { color: #0f172a; }
+
+.nt-time {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-weight: 500;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    margin-left: 10px;
+}
