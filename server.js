@@ -630,116 +630,301 @@ app.get('/profile', isAuthenticated, async (req, res) => {
 });
 
 app.get('/profile/avatar', isAuthenticated, async (req, res) => {
-    const user = await User.findOne({ username: req.session.user });
-    const selectedAvatar = req.query.avatar || user.avatar || '';
-
-    // All avatars together - no fake categories
-    const avatarList = [
-        // Adventurer style
-        { style: 'adventurer', seed: 'Felix' },
-        { style: 'adventurer', seed: 'Aneka' },
-        { style: 'adventurer', seed: 'Milo' },
-        { style: 'adventurer', seed: 'Lily' },
-        { style: 'adventurer', seed: 'Zoe' },
-        { style: 'adventurer', seed: 'Leo' },
-        { style: 'adventurer', seed: 'Mia' },
-        { style: 'adventurer', seed: 'Ryan' },
-        { style: 'adventurer', seed: 'Nora' },
-        { style: 'adventurer', seed: 'Kai' },
-        { style: 'adventurer', seed: 'Ivy' },
-        { style: 'adventurer', seed: 'Oscar' },
-        { style: 'adventurer', seed: 'Walter' },
-        { style: 'adventurer', seed: 'Margaret' },
-        { style: 'adventurer', seed: 'Arthur' },
-        { style: 'adventurer', seed: 'Eleanor' },
-        { style: 'adventurer', seed: 'Henry' },
-        { style: 'adventurer', seed: 'Rose' },
-        // Avataaars style
-        { style: 'avataaars', seed: 'Oliver' },
-        { style: 'avataaars', seed: 'Jack' },
-        { style: 'avataaars', seed: 'Charlie' },
-        { style: 'avataaars', seed: 'George' },
-        { style: 'avataaars', seed: 'Harry' },
-        { style: 'avataaars', seed: 'Thomas' },
-        { style: 'avataaars', seed: 'Sophia' },
-        { style: 'avataaars', seed: 'Olivia' },
-        { style: 'avataaars', seed: 'Emma' },
-        { style: 'avataaars', seed: 'Ava' },
-        { style: 'avataaars', seed: 'Charlotte' },
-        { style: 'avataaars', seed: 'Amelia' },
-        { style: 'avataaars', seed: 'Isabella' },
-        { style: 'avataaars', seed: 'Luna' },
-        { style: 'avataaars', seed: 'Ruby' },
-        { style: 'avataaars', seed: 'Adam' },
-        { style: 'avataaars', seed: 'Noah' },
-        { style: 'avataaars', seed: 'Max' },
-        // Big Smile style
-        { style: 'big-smile', seed: 'Happy' },
-        { style: 'big-smile', seed: 'Cool' },
-        { style: 'big-smile', seed: 'Sunny' },
-        { style: 'big-smile', seed: 'Bright' },
-        { style: 'big-smile', seed: 'Cheer' },
-        { style: 'big-smile', seed: 'Joy' },
-        { style: 'big-smile', seed: 'Fun' },
-        { style: 'big-smile', seed: 'Smile' },
-        { style: 'big-smile', seed: 'Star' },
-        { style: 'big-smile', seed: 'Sparkle' },
-        { style: 'big-smile', seed: 'Buzz' },
-        { style: 'big-smile', seed: 'Zing' },
-        // Fun Emoji style
-        { style: 'fun-emoji', seed: 'Baby' },
-        { style: 'fun-emoji', seed: 'Sweet' },
-        { style: 'fun-emoji', seed: 'Cuddle' },
-        { style: 'fun-emoji', seed: 'Hug' },
-        { style: 'fun-emoji', seed: 'Angel' },
-        { style: 'fun-emoji', seed: 'Sunshine' },
-        { style: 'fun-emoji', seed: 'Cupcake' },
-        { style: 'fun-emoji', seed: 'Peach' },
-        { style: 'fun-emoji', seed: 'Berry' },
-        { style: 'fun-emoji', seed: 'Honey' },
-        { style: 'fun-emoji', seed: 'Bunny' },
-        { style: 'fun-emoji', seed: 'Kitty' }
-    ];
-
-    let avatarGridHtml = '';
-    avatarList.forEach(item => {
-        const url = `https://api.dicebear.com/7.x/${item.style}/svg?seed=${encodeURIComponent(item.seed)}`;
-        const isSelected = user.avatar === url;
-        avatarGridHtml += `
-            <a href="/profile/avatar?avatar=${encodeURIComponent(url)}" class="avatar-library-item ${isSelected ? 'library-selected' : ''}">
-                <img src="${url}" alt="${item.seed}">
-            </a>
-        `;
-    });
-
-    // If an avatar is selected (differs from current), show Save bar
-    let saveBar = '';
-    if (selectedAvatar && selectedAvatar !== user.avatar) {
-        saveBar = `
-            <div class="avatar-save-bar">
-                <form action="/profile/avatar" method="POST" style="margin:0; display:flex; gap:10px; width:100%;">
-                    <input type="hidden" name="avatar_url" value="${selectedAvatar}">
-                    <a href="/profile/avatar" class="avatar-cancel-btn">Cancel</a>
-                    <button type="submit" class="avatar-save-btn">Save Avatar</button>
-                </form>
-            </div>
-        `;
-    }
+    const me = req.session.user;
+    const safeSeed = encodeURIComponent(me);
 
     res.send(`
-        <html><head><link rel="stylesheet" href="/style.css"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.svg"></head><body>
-        <div class="container">
-            <header>
-                <a href="/profile" class="header-icon" title="Back">${icons.back}</a>
-                <span class="profile-title" style="flex:1;">Choose Avatar</span>
+        <html><head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/style.css">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
+        <title>Avatar - EliGet</title>
+        </head><body class="ab-body">
+        <div class="ab-wrap">
+
+            <header class="ab-topbar">
+                <a href="/profile" class="ab-back" title="Back">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="currentColor"/></svg>
+                </a>
+                <span class="ab-title">Your avatar</span>
+                <button type="button" class="ab-random" onclick="abShuffle()" title="Shuffle">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-8 8s3.58 8 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/></svg>
+                </button>
             </header>
-            <p style="color: #718096; font-size: 0.9rem; margin-bottom: 15px; text-align: center;">Pick any avatar you like</p>
-            <div class="avatar-library-grid">
-                ${avatarGridHtml}
+
+            <div class="ab-preview">
+                <div class="ab-preview-frame">
+                    <img id="abPreview" src="" alt="Avatar">
+                </div>
             </div>
-            ${saveBar}
+
+            <div class="ab-controls" id="abControls"></div>
+
+            <div class="ab-actions">
+                <button type="button" class="ab-btn-secondary" onclick="abReset()">Reset</button>
+                <button type="button" class="ab-btn-primary" onclick="abSave()">Save avatar</button>
+            </div>
+
         </div>
-        <div class="bottom-nav"><a href="/">${icons.home}<span>Home</span></a><a href="/students">${icons.students}<span>Students</span></a><a href="/post/create">${icons.plus}<span>Post</span></a><a href="/chat">${icons.chat}<span>Chat</span></a><a href="/profile" class="active">${icons.profile}<span>Profile</span></a></div>
+
+        <script>
+        var AB_SEED = 'Felix';
+        var AB_STATE = {
+            bg: 'b6e3f4',
+            skinColor: 'edb98a',
+            top: 'shortFlat',
+            hairColor: 'a55728',
+            eyes: 'happy',
+            mouth: 'smile',
+            eyebrows: 'default',
+            accessories: '',
+            facialHair: '',
+            clothing: 'hoodie',
+            clothesColor: '5199e4'
+        };
+
+        var AB_OPTIONS = {
+            bg: [
+                { v: 'b6e3f4' }, { v: 'c0aede' }, { v: 'd1d4f9' }, { v: 'ffd5dc' },
+                { v: 'ffdfbf' }, { v: 'a8e6cf' }, { v: 'fddb92' }, { v: 'a0c4ff' },
+                { v: 'bdb2ff' }, { v: 'ffc6ff' }, { v: 'ffffff' }, { v: '1e293b' }
+            ],
+            skinColor: [
+                { v: 'ffdbb4' }, { v: 'edb98a' }, { v: 'd08b5b' },
+                { v: 'ae5d29' }, { v: '614335' }, { v: 'f8d25c' }, { v: 'fd9841' }
+            ],
+            hairColor: [
+                { v: 'a55728' }, { v: '2c1b18' }, { v: 'b58143' },
+                { v: 'd6b370' }, { v: '724133' }, { v: '4a312c' },
+                { v: 'f59797' }, { v: 'e8e1e1' }, { v: 'ecdcbf' }, { v: 'c93305' }
+            ],
+            top: [
+                { v: 'shortFlat', l: 'Short' },
+                { v: 'shortRound', l: 'Round' },
+                { v: 'shortCurly', l: 'Curly' },
+                { v: 'shortWaved', l: 'Waved' },
+                { v: 'theCaesar', l: 'Caesar' },
+                { v: 'frizzle', l: 'Frizzle' },
+                { v: 'bigHair', l: 'Big' },
+                { v: 'bob', l: 'Bob' },
+                { v: 'bun', l: 'Bun' },
+                { v: 'curly', l: 'Curvy' },
+                { v: 'fro', l: 'Fro' },
+                { v: 'straight01', l: 'Straight' },
+                { v: 'straight02', l: 'Longer' },
+                { v: 'dreads', l: 'Dreads' },
+                { v: 'miaWallace', l: 'Mia' },
+                { v: 'hat', l: 'Hat' },
+                { v: 'winterHat1', l: 'Winter' },
+                { v: 'turban', l: 'Turban' },
+                { v: 'hijab', l: 'Hijab' }
+            ],
+            eyes: [
+                { v: 'default', l: 'Normal' },
+                { v: 'happy', l: 'Happy' },
+                { v: 'wink', l: 'Wink' },
+                { v: 'squint', l: 'Squint' },
+                { v: 'side', l: 'Side' },
+                { v: 'surprised', l: 'Surprised' },
+                { v: 'hearts', l: 'Hearts' },
+                { v: 'cry', l: 'Cry' },
+                { v: 'dizzy', l: 'Dizzy' },
+                { v: 'closed', l: 'Close' }
+            ],
+            mouth: [
+                { v: 'default', l: 'Normal' },
+                { v: 'smile', l: 'Smile' },
+                { v: 'twinkle', l: 'Twinkle' },
+                { v: 'serious', l: 'Serious' },
+                { v: 'concerned', l: 'Concerned' },
+                { v: 'disbelief', l: 'Disbelief' },
+                { v: 'sad', l: 'Sad' },
+                { v: 'grimace', l: 'Grimace' },
+                { v: 'eating', l: 'Eating' },
+                { v: 'tongue', l: 'Tongue' }
+            ],
+            eyebrows: [
+                { v: 'default', l: 'Normal' },
+                { v: 'raised', l: 'Raised' },
+                { v: 'angry', l: 'Angry' },
+                { v: 'concerned', l: 'Concerned' },
+                { v: 'flat', l: 'Flat' },
+                { v: 'sad', l: 'Sad' },
+                { v: 'up', l: 'Up' },
+                { v: 'angryNatural', l: 'Bold' },
+                { v: 'defaultNatural', l: 'Natural' }
+            ],
+            accessories: [
+                { v: '', l: 'None' },
+                { v: 'round', l: 'Round' },
+                { v: 'prescription01', l: 'Small' },
+                { v: 'prescription02', l: 'Classic' },
+                { v: 'wayfarers', l: 'Wayfarer' },
+                { v: 'sunglasses', l: 'Sunglasses' },
+                { v: 'kurt', l: 'Bold' }
+            ],
+            facialHair: [
+                { v: '', l: 'None' },
+                { v: 'beardMedium', l: 'Medium' },
+                { v: 'beardLight', l: 'Light' },
+                { v: 'beardMajestic', l: 'Majestic' },
+                { v: 'moustacheFancy', l: 'Fancy' },
+                { v: 'moustacheMagnum', l: 'Magnum' }
+            ],
+            clothing: [
+                { v: 'hoodie', l: 'Hoodie' },
+                { v: 'blazerAndShirt', l: 'Blazer' },
+                { v: 'blazerAndSweater', l: 'Sweater' },
+                { v: 'collarAndSweater', l: 'Collar' },
+                { v: 'graphicShirt', l: 'Graphic' },
+                { v: 'overall', l: 'Overall' },
+                { v: 'shirtCrewNeck', l: 'Crew' },
+                { v: 'shirtScoopNeck', l: 'Scoop' },
+                { v: 'shirtVNeck', l: 'V-Neck' }
+            ],
+            clothesColor: [
+                { v: '262e33' }, { v: '65c9ff' }, { v: '5199e4' },
+                { v: '25557c' }, { v: '929598' }, { v: 'a7ffc4' },
+                { v: 'ffafb9' }, { v: 'ff488e' }, { v: 'ff5c5c' },
+                { v: 'ffffb1' }, { v: 'ffffff' }, { v: '1e293b' }
+            ]
+        };
+
+        function abComposeUrl() {
+            var s = AB_STATE;
+            var parts = ['seed=' + AB_SEED];
+            parts.push('backgroundColor=' + s.bg);
+            parts.push('skinColor=' + s.skinColor);
+            parts.push('top=' + s.top);
+            parts.push('hairColor=' + s.hairColor);
+            parts.push('eyes=' + s.eyes);
+            parts.push('mouth=' + s.mouth);
+            parts.push('eyebrows=' + s.eyebrows);
+            parts.push('clothing=' + s.clothing);
+            parts.push('clothesColor=' + s.clothesColor);
+
+            if (s.accessories) {
+                parts.push('accessories=' + s.accessories);
+                parts.push('accessoriesColor=262e33');
+                parts.push('accessoriesProbability=100');
+            } else {
+                parts.push('accessoriesProbability=0');
+            }
+            if (s.facialHair) {
+                parts.push('facialHair=' + s.facialHair);
+                parts.push('facialHairColor=' + s.hairColor);
+                parts.push('facialHairProbability=100');
+            } else {
+                parts.push('facialHairProbability=0');
+            }
+            return 'https://api.dicebear.com/7.x/avataaars/svg?' + parts.join('&');
+        }
+
+        function abUpdatePreview() {
+            var img = document.getElementById('abPreview');
+            if (img) img.src = abComposeUrl();
+        }
+
+        function abRenderControls() {
+            var box = document.getElementById('abControls');
+            var html = '';
+
+            function colorGroup(label, key, opts) {
+                var h = '<div class="ab-group"><div class="ab-group-label">' + label + '</div><div class="ab-colors">';
+                opts.forEach(function(o) {
+                    var active = AB_STATE[key] === o.v ? ' active' : '';
+                    h += '<button type="button" class="ab-color' + active + '" style="background:#' + o.v + '" data-key="' + key + '" data-val="' + o.v + '" onclick="abPick(this)"></button>';
+                });
+                h += '</div></div>';
+                return h;
+            }
+
+            function pillGroup(label, key, opts) {
+                var h = '<div class="ab-group"><div class="ab-group-label">' + label + '</div><div class="ab-pills">';
+                opts.forEach(function(o) {
+                    var active = AB_STATE[key] === o.v ? ' active' : '';
+                    h += '<button type="button" class="ab-pill' + active + '" data-key="' + key + '" data-val="' + o.v + '" onclick="abPick(this)">' + o.l + '</button>';
+                });
+                h += '</div></div>';
+                return h;
+            }
+
+            html += colorGroup('Background', 'bg', AB_OPTIONS.bg);
+            html += colorGroup('Skin', 'skinColor', AB_OPTIONS.skinColor);
+            html += pillGroup('Hair style', 'top', AB_OPTIONS.top);
+            html += colorGroup('Hair color', 'hairColor', AB_OPTIONS.hairColor);
+            html += pillGroup('Glasses', 'accessories', AB_OPTIONS.accessories);
+            html += pillGroup('Beard', 'facialHair', AB_OPTIONS.facialHair);
+            html += pillGroup('Dress', 'clothing', AB_OPTIONS.clothing);
+            html += colorGroup('Dress color', 'clothesColor', AB_OPTIONS.clothesColor);
+            html += pillGroup('Eyes', 'eyes', AB_OPTIONS.eyes);
+            html += pillGroup('Mouth', 'mouth', AB_OPTIONS.mouth);
+            html += pillGroup('Eyebrows', 'eyebrows', AB_OPTIONS.eyebrows);
+
+            box.innerHTML = html;
+        }
+
+        function abPick(btn) {
+            var key = btn.getAttribute('data-key');
+            var val = btn.getAttribute('data-val');
+            AB_STATE[key] = val;
+            var parent = btn.parentNode;
+            parent.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            abUpdatePreview();
+        }
+
+        function abShuffle() {
+            function pick(arr) { return arr[Math.floor(Math.random() * arr.length)].v; }
+            AB_STATE.bg = pick(AB_OPTIONS.bg);
+            AB_STATE.skinColor = pick(AB_OPTIONS.skinColor);
+            AB_STATE.top = pick(AB_OPTIONS.top);
+            AB_STATE.hairColor = pick(AB_OPTIONS.hairColor);
+            AB_STATE.eyes = pick(AB_OPTIONS.eyes);
+            AB_STATE.mouth = pick(AB_OPTIONS.mouth);
+            AB_STATE.eyebrows = pick(AB_OPTIONS.eyebrows);
+            AB_STATE.accessories = pick(AB_OPTIONS.accessories);
+            AB_STATE.facialHair = pick(AB_OPTIONS.facialHair);
+            AB_STATE.clothing = pick(AB_OPTIONS.clothing);
+            AB_STATE.clothesColor = pick(AB_OPTIONS.clothesColor);
+            abRenderControls();
+            abUpdatePreview();
+        }
+
+        function abReset() {
+            AB_STATE.bg = 'b6e3f4';
+            AB_STATE.skinColor = 'edb98a';
+            AB_STATE.top = 'shortFlat';
+            AB_STATE.hairColor = 'a55728';
+            AB_STATE.eyes = 'happy';
+            AB_STATE.mouth = 'smile';
+            AB_STATE.eyebrows = 'default';
+            AB_STATE.accessories = '';
+            AB_STATE.facialHair = '';
+            AB_STATE.clothing = 'hoodie';
+            AB_STATE.clothesColor = '5199e4';
+            abRenderControls();
+            abUpdatePreview();
+        }
+
+        function abSave() {
+            var url = abComposeUrl();
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/profile/avatar';
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'avatar_url';
+            input.value = url;
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        abRenderControls();
+        abUpdatePreview();
+        </script>
         </body></html>
     `);
 });
