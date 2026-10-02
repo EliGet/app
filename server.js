@@ -128,6 +128,13 @@ async function getFollowSet(currentUser) {
     return new Set(follows.map(f => f.following));
 }
 
+// 5-minute edit/delete window
+const EDIT_WINDOW_MS = 5 * 60 * 1000;
+function canModifyPost(createdAt) {
+    if (!createdAt) return false;
+    return (Date.now() - new Date(createdAt).getTime()) < EDIT_WINDOW_MS;
+}
+
 async function renderPostCard(p, currentUser, followSet) {
     const author = await User.findOne({ username: p.author });
     const displayName = author ? (author.full_name || author.username) : p.author;
@@ -158,7 +165,7 @@ async function renderPostCard(p, currentUser, followSet) {
     }
 
     let menuHtml = '';
-    if (currentUser && currentUser === p.author) {
+    if (currentUser && currentUser === p.author && canModifyPost(p.created_at)) {
         menuHtml = `
             <div class="post-menu-wrapper">
                 <button type="button" class="post-menu-btn" onclick="togglePostMenu(event, '${p._id}')">
