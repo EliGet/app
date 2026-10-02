@@ -8,7 +8,7 @@ app.use((req, res, next) => {
     const _send = res.send.bind(res);
     res.send = function(body) {
         if (typeof body === 'string' && body.includes('</body>') && !body.includes('/love.js')) {
-            body = body.replace('</body>', '<script src="/love.js"></script><script src="/follow.js"></script></body>');
+            body = body.replace('</body>', '<script src="/love.js"></script><script src="/follow.js"></script><script src="/report.js"></script></body>');
         }
         return _send(body);
     };
@@ -23,6 +23,7 @@ const User = require('./models/User');
 const Follow = require('./models/Follow');
 const Block = require('./models/Block');
 const Notification = require('./models/Notification');
+const Report = require('./models/Report');
 const Post = require('./models/Post');
 const StudentPost = require('./models/StudentPost');
 const FriendRequest = require('./models/FriendRequest');
@@ -167,7 +168,22 @@ async function renderPostCard(p, currentUser, followSet) {
     }
 
     let menuHtml = '';
-    if (currentUser && currentUser === p.author && canModifyPost(p.created_at)) {
+    if (currentUser && currentUser !== p.author) {
+        // Report option for other users' posts
+        menuHtml = `
+            <div class="post-menu-wrapper">
+                <button type="button" class="post-menu-btn" onclick="togglePostMenu(event, '${p._id}')">
+                    <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                </button>
+                <div class="post-menu-dropdown" id="menu-${p._id}">
+                    <button type="button" class="post-menu-item danger" onclick="closePostMenus();rpOpen('post','${p._id}')">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        Report
+                    </button>
+                </div>
+            </div>
+        `;
+    } else if (currentUser && currentUser === p.author && canModifyPost(p.created_at)) {
         menuHtml = `
             <div class="post-menu-wrapper">
                 <button type="button" class="post-menu-btn" onclick="togglePostMenu(event, '${p._id}')">
@@ -1204,6 +1220,9 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
                         <button type="button" class="pp-block-item ${isBlocked ? 'unblock' : 'block'}" onclick="toggleBlock('${targetUsername}', ${isBlocked ? 'true' : 'false'})">
                             ${isBlocked ? 'Unblock user' : 'Block user'}
                         </button>
+                        <button type="button" class="pp-block-item report" onclick="toggleProfileMenuClose();rpOpen('user','${targetUsername}')">
+                            Report user
+                        </button>
                     </div>
                 ` : ''}
 
@@ -1861,6 +1880,56 @@ app.post('/notifications/seen', isAuthenticated, async (req, res) => {
         res.json({ ok: true });
     } catch (err) {
         console.error('Mark seen error:', err);
+        res.json({ ok: false });
+    }
+});
+
+// ===== REPORT SUBMIT =====
+app.post('/report', isAuthenticated, async (req, res) => {
+    try {
+        const me = req.session.user;
+        const { target_type, target_id, reason, note } = req.body;
+
+        const validTypes = ['post', 'student_post', 'user', 'chat_message', 'group_message'];
+        const validReasons = ['spam', 'harassment', 'hate', 'misinformation', 'other'];
+
+        if (!validTypes.includes(target_type) || !validReasons.includes(reason) || !target_id) {
+            return res.json({ ok: false, reason: 'invalid' });
+        }
+
+        // Prevent duplicate reports
+        const existing = await Report.findOne({ reporter: me, target_type: target_type, target_id: target_id });
+        if (existing) {
+            return res.json({ ok: true, duplicate: true });
+        }
+
+        // Fetch target owner
+        let target_owner = '';
+        try {
+            if (target_type === 'post') {
+                const p = await Post.findById(target_id);
+                if (p) target_owner = p.author;
+            } else if (target_type === 'student_post') {
+                const StudentPost = require('./models/StudentPost');
+                const sp = await StudentPost.findById(target_id);
+                if (sp) target_owner = sp.author;
+            } else if (target_type === 'user') {
+                target_owner = target_id;
+            }
+        } catch (e) {}
+
+        await Report.create({
+            reporter: me,
+            target_type: target_type,
+            target_id: target_id,
+            target_owner: target_owner,
+            reason: reason,
+            note: String(note || '').slice(0, 500)
+        });
+
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('Report error:', err);
         res.json({ ok: false });
     }
 });

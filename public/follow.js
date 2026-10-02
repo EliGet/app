@@ -82,3 +82,14 @@ document.addEventListener('click', function(e) {
         if (!btn) menu.classList.remove('open');
     }
 });
+
+// Close profile block/report menu
+function toggleProfileMenuClose() {
+    var menu = document.getElementById('blockMenu');
+    if (menu) menu.classList.remove('open');
+}
+
+// Close all post dropdown menus
+function closePostMenus() {
+    document.querySelectorAll('.post-menu-dropdown').forEach(function(m) { m.classList.remove('active'); });
+}

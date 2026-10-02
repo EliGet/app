@@ -6742,3 +6742,184 @@ a.chat-header-user:active {
     box-shadow: 0 0 0 2px #0f172a;
     transform: scale(1.05);
 }
+
+/* ===== Report modal v1 ===== */
+.rp-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.55);
+    backdrop-filter: blur(4px);
+    z-index: 300;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+}
+.rp-modal.open { display: flex; }
+.rp-modal-inner {
+    background: #fff;
+    width: 100%;
+    max-width: 520px;
+    border-radius: 20px 20px 0 0;
+    padding: 22px 22px 26px;
+    box-sizing: border-box;
+    box-shadow: 0 -8px 30px rgba(15,23,42,0.2);
+    animation: rpSlideUp 0.22s ease;
+}
+@keyframes rpSlideUp {
+    from { transform: translateY(20px); opacity: 0.6; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.rp-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.rp-modal-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+}
+.rp-modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.rp-modal-close:hover { background: #f1f5f9; color: #0f172a; }
+.rp-modal-close svg { display: block; fill: currentColor; }
+
+.rp-modal-desc {
+    font-size: 0.86rem;
+    color: #64748b;
+    margin: 0 0 18px;
+    line-height: 1.5;
+}
+
+.rp-reasons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.rp-reason {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 13px 16px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.rp-reason:hover { background: #fff; }
+.rp-reason.active {
+    background: #fff;
+    border-color: #0f172a;
+    color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15,23,42,0.06);
+}
+
+.rp-note {
+    width: 100%;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    color: #0f172a;
+    box-sizing: border-box;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    margin-bottom: 14px;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.rp-note::placeholder { color: #94a3b8; }
+.rp-note:focus {
+    background: #fff;
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15,23,42,0.06);
+}
+
+.rp-submit {
+    width: 100%;
+    padding: 15px 22px;
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.18s ease, transform 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.rp-submit:hover { background: #b91c1c; }
+.rp-submit:active { transform: scale(0.99); }
+.rp-submit:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* Report menu item in 3-dot dropdown */
+.post-menu-item.report,
+.pp-menu-dropdown a.report {
+    color: #dc2626;
+}
+.post-menu-item.report:hover,
+.pp-menu-dropdown a.report:hover {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+/* ===== Report menu item v1 ===== */
+.pp-block-item.report {
+    color: #dc2626;
+}
+.pp-block-item.report:hover {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+/* ===== Report modal z-fix ===== */
+.rp-modal {
+    z-index: 3000 !important;
+    padding-bottom: 80px !important;
+    box-sizing: border-box !important;
+    align-items: center !important;
+}
+.rp-modal-inner {
+    max-height: calc(100vh - 100px) !important;
+    overflow-y: auto !important;
+    margin: auto !important;
+    border-radius: 20px !important;
+    padding: 22px !important;
+}
+@media (max-width: 600px) {
+    .rp-modal-inner {
+        border-radius: 20px 20px 0 0 !important;
+        margin: 0 auto !important;
+        align-self: flex-end !important;
+    }
+    .rp-modal {
+        align-items: flex-end !important;
+        padding-bottom: 90px !important;
+    }
+}
