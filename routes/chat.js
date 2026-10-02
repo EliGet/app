@@ -4,6 +4,7 @@ const errorPage = require('../errorPage');
 const router = express.Router();
 const User = require('../models/User');
 const FriendRequest = require('../models/FriendRequest');
+const Follow = require('../models/Follow');
 const Message = require('../models/Message');
 const Block = require('../models/Block');
 const Notification = require('../models/Notification');
@@ -36,17 +37,26 @@ function getBottomNav(active) {
     return `<div class="bottom-nav"><a href="/" class="${active === 'home' ? 'active' : ''}">${icons.home}<span>Home</span></a><a href="/post/create" class="${active === 'post' ? 'active' : ''}">${icons.plus}<span>Post</span></a><a href="/chat" class="${active === 'chat' ? 'active' : ''}">${icons.chat}<span>Chat</span></a><a href="/profile" class="${active === 'profile' ? 'active' : ''}">${icons.profile}<span>Profile</span></a></div>`;
 }
 
+// Get users who mutually follow me (both directions)
+async function getMutualFollows(me) {
+    const iFollow = await Follow.find({ follower: me }).select('following');
+    const myFollowing = iFollow.map(f => f.following);
+    if (myFollowing.length === 0) return [];
+    const followMe = await Follow.find({
+        following: me,
+        follower: { $in: myFollowing }
+    }).select('follower');
+    return followMe.map(f => f.follower);
+}
+
 // ===== CHAT LIST (with search) =====
 router.get('/', async (req, res) => {
     try {
         const me = req.session.user;
         const filter = req.query.filter || 'all';
 
-        const acceptedRequests = await FriendRequest.find({
-            status: 'accepted',
-            $or: [{ from: me }, { to: me }]
-        });
-        const acceptedUsers = acceptedRequests.map(r => r.from === me ? r.to : r.from);
+        // Mutual follows = chat-able users
+        const mutualUsers = await getMutualFollows(me);
 
         // Filter blocked users both directions
         const myBlocks = await Block.find({ blocker: me }).select('blocked');
@@ -55,7 +65,7 @@ router.get('/', async (req, res) => {
             ...myBlocks.map(b => b.blocked),
             ...theirBlocks.map(b => b.blocker)
         ]);
-        const visibleUsers = acceptedUsers.filter(u => !blockedSet.has(u));
+        const visibleUsers = mutualUsers.filter(u => !blockedSet.has(u));
 
         let chatItemsHtml = '';
         let hasChats = false;
@@ -149,9 +159,8 @@ router.get('/', async (req, res) => {
             chatItemsHtml = `<p style="text-align:center; color:#a0aec0; padding: 20px;">${emptyMsg}</p>`;
         }
 
-        const pendingFriendCount = await FriendRequest.countDocuments({ to: me, status: 'pending' });
         const unseenNotifCount = await Notification.countDocuments({ recipient: me, seen: false });
-        const pendingCount = pendingFriendCount + unseenNotifCount;
+        const pendingCount = unseenNotifCount;
 
         res.send(`
             <html><head>
@@ -165,7 +174,7 @@ router.get('/', async (req, res) => {
                     <span class="profile-title">Chats</span>
                     <div class="header-actions">
                         <a href="/group/create" class="settings-icon" title="New Group">${icons.group}</a>
-                        <a href="/chat/new" class="settings-icon" title="Add Friends">${icons.plus}</a>
+                        <a href="/search" class="settings-icon" title="Search">${icons.search}</a>
                         <a href="/chat/notifications" class="settings-icon" title="Notifications">
                             ${icons.bell}
                             ${pendingCount > 0 ? `<span class="badge">${pendingCount}</span>` : ''}
@@ -224,38 +233,12 @@ router.get('/', async (req, res) => {
 });
 
 // ===== ADD FRIENDS PAGE (live search) =====
-router.get('/new', async (req, res) => {
-    const searchIconSvg = icons.search;
-    res.send(`
-        <html><head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/style.css">
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-        <title>Add Friends - EliGet</title>
-        </head><body>
-        <div class="container">
-            <header>
-                <a href="/chat" class="header-icon" title="Back">${icons.back}</a>
-                <span class="profile-title" style="flex:1;">Add Friends</span>
-            </header>
-
-            <div class="chat-search-wrap">
-                <svg class="chat-search-icon" viewBox="0 0 24 24">${searchIconSvg.match(/<path[^>]*>/)[0]}</svg>
-                <input type="text" id="userSearch" class="chat-search-input" placeholder="Search by username or name..." autocomplete="off" autofocus>
-            </div>
-
-            <div class="chat-list" id="resultsBox">
-                <p style="text-align:center; color:#a0aec0; padding:24px;">Start typing to search users.</p>
-            </div>
-        </div>
-        ${getBottomNav('chat')}
-        <script src="/user-search.js"></script>
-        </body></html>
-    `);
+router.get('/new', (req, res) => {
+    res.redirect('/search');
 });
 
-// ===== SEARCH API (JSON) =====
-router.get('/api/search', async (req, res) => {
+// ===== USER SEARCH API (for Find People) =====
+router.get('/api/search-users', async (req, res) => {
     try {
         const me = req.session.user;
         const q = (req.query.q || '').trim();
@@ -271,18 +254,13 @@ router.get('/api/search', async (req, res) => {
 
         const result = [];
         for (const u of users) {
-            const existingReq = await FriendRequest.findOne({
-                $or: [
-                    { from: me, to: u.username },
-                    { from: u.username, to: me }
-                ]
-            });
+            const iFollow = await Follow.findOne({ follower: me, following: u.username });
+            const theyFollow = await Follow.findOne({ follower: u.username, following: me });
             let status = 'none';
-            if (existingReq) {
-                if (existingReq.status === 'accepted') status = 'friend';
-                else if (existingReq.status === 'pending' && existingReq.from === me) status = 'requested';
-                else if (existingReq.status === 'pending' && existingReq.to === me) status = 'respond';
-            }
+            if (iFollow && theyFollow) status = 'mutual';
+            else if (iFollow) status = 'following';
+            else if (theyFollow) status = 'follows-me';
+
             const displayName = u.full_name || u.username;
             result.push({
                 username: u.username,
@@ -294,82 +272,16 @@ router.get('/api/search', async (req, res) => {
         }
         res.json({ ok: true, users: result });
     } catch (err) {
-        console.error('Search API error:', err);
+        console.error('Search users error:', err);
         res.json({ ok: false, users: [] });
     }
 });
 
 // ===== NOTIFICATIONS =====
-// ===== SEND FRIEND REQUEST (AJAX) =====
-router.post('/api/request', async (req, res) => {
-    try {
-        const me = req.session.user;
-        if (!me) return res.json({ ok: false, reason: 'auth' });
-
-        const to = (req.body && req.body.to) ? String(req.body.to).trim() : '';
-        if (!to || to === me) return res.json({ ok: false, reason: 'invalid' });
-
-        const targetUser = await User.findOne({ username: to });
-        if (!targetUser) return res.json({ ok: false, reason: 'notfound' });
-
-        const existing = await FriendRequest.findOne({
-            $or: [
-                { from: me, to: to },
-                { from: to, to: me }
-            ]
-        });
-
-        if (existing) {
-            if (existing.status === 'accepted') {
-                return res.json({ ok: true, status: 'friend' });
-            }
-            if (existing.status === 'pending') {
-                return res.json({ ok: true, status: existing.from === me ? 'requested' : 'respond' });
-            }
-        }
-
-        await FriendRequest.create({ from: me, to: to, status: 'pending' });
-        res.json({ ok: true, status: 'requested' });
-    } catch (err) {
-        console.error('Friend request error:', err);
-        res.json({ ok: false, reason: 'error' });
-    }
-});
-
 router.get('/notifications', async (req, res) => {
     try {
         const me = req.session.user;
 
-        // 1. Friend requests (pending)
-        const pendingRequests = await FriendRequest.find({ to: me, status: 'pending' }).sort({ created_at: -1 });
-
-        let friendReqsHtml = '';
-        for (const request of pendingRequests) {
-            const sender = await User.findOne({ username: request.from });
-            if (!sender) continue;
-            const displayName = sender.full_name || sender.username;
-            const initial = displayName.charAt(0).toUpperCase();
-            const avatarInner = sender.avatar ? `<img src="${sender.avatar}" alt="">` : initial;
-            friendReqsHtml += `
-                <div class="nt-item">
-                    <div class="nt-avatar">${avatarInner}</div>
-                    <div class="nt-info">
-                        <div class="nt-name">${displayName}</div>
-                        <div class="nt-username">@${sender.username}</div>
-                    </div>
-                    <div class="nt-actions">
-                        <form action="/chat/accept/${request._id}" method="POST" style="margin:0;">
-                            <button type="submit" class="nt-accept">Accept</button>
-                        </form>
-                        <form action="/chat/reject/${request._id}" method="POST" style="margin:0;">
-                            <button type="submit" class="nt-reject">Reject</button>
-                        </form>
-                    </div>
-                </div>
-            `;
-        }
-
-        // 2. Other notifications (follow, mention)
         const notifications = await Notification.find({ recipient: me })
             .sort({ created_at: -1 })
             .limit(50);
@@ -391,8 +303,8 @@ router.get('/notifications', async (req, res) => {
                 text = 'mentioned you in a post';
                 link = n.ref_id ? `/post/${n.ref_id}` : `/profile/${n.actor}`;
             } else if (n.type === 'friend_accepted') {
-                text = 'accepted your friend request';
-                link = `/chat/${n.actor}`;
+                text = 'accepted your follow';
+                link = `/profile/${n.actor}`;
             }
 
             const timeStr = (function(d) {
@@ -408,7 +320,7 @@ router.get('/notifications', async (req, res) => {
             })(n.created_at);
 
             notifsHtml += `
-                <a href="${link}" class="nt-item nt-item-link${n.seen ? '' : ' unread'}">
+                <a href="${link}" class="nt-item nt-item-link">
                     <div class="nt-avatar">${av}</div>
                     <div class="nt-info">
                         <div class="nt-name">${dn}</div>
@@ -419,16 +331,14 @@ router.get('/notifications', async (req, res) => {
             `;
         }
 
-        // Delete follow/accepted notifications after user views them
+        // Delete follow + friend_accepted notifications after view
         await Notification.deleteMany({
             recipient: me,
             type: { $in: ['follow', 'friend_accepted'] }
         });
 
-        const hasAnything = pendingRequests.length > 0 || notifications.length > 0;
-
         let bodyHtml = '';
-        if (!hasAnything) {
+        if (notifications.length === 0) {
             bodyHtml = `<div class="empty-state">
                 <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
                 <h3>All caught up</h3>
@@ -436,12 +346,7 @@ router.get('/notifications', async (req, res) => {
                 <a href="/chat">Back to chats</a>
             </div>`;
         } else {
-            if (pendingRequests.length > 0) {
-                bodyHtml += `<h2 class="nt-section-label">Friend requests</h2><div class="nt-list">${friendReqsHtml}</div>`;
-            }
-            if (notifications.length > 0) {
-                bodyHtml += `<h2 class="nt-section-label" style="margin-top:24px;">Activity</h2><div class="nt-list">${notifsHtml}</div>`;
-            }
+            bodyHtml = `<h2 class="nt-section-label">Activity</h2><div class="nt-list">${notifsHtml}</div>`;
         }
 
         res.send(`
@@ -468,38 +373,6 @@ router.get('/notifications', async (req, res) => {
     }
 });
 
-// ===== ACCEPT REQUEST =====
-router.post('/accept/:id', async (req, res) => {
-    try {
-        const me = req.session.user;
-        const fr = await FriendRequest.findById(req.params.id);
-        if (fr && fr.to === me) {
-            await FriendRequest.updateOne({ _id: req.params.id }, { status: 'accepted' });
-            // Notify sender that request was accepted
-            await Notification.create({
-                recipient: fr.from,
-                actor: me,
-                type: 'friend_accepted',
-                ref_id: fr._id.toString()
-            });
-        }
-        res.redirect('/chat/notifications');
-    } catch (error) {
-        console.error('Accept error:', error);
-        res.redirect('/chat');
-    }
-});
-
-// ===== REJECT REQUEST =====
-router.post('/reject/:id', async (req, res) => {
-    try {
-        await FriendRequest.deleteOne({ _id: req.params.id });
-        res.redirect('/chat/notifications');
-    } catch (error) {
-        res.redirect('/chat/notifications');
-    }
-});
-
 // ===== DIRECT CHAT ROOM =====
 router.get('/:withUser', async (req, res) => {
     try {
@@ -515,6 +388,11 @@ router.get('/:withUser', async (req, res) => {
             ]
         });
         if (blockEither) return res.redirect('/chat');
+
+        // Mutual follow check
+        const iFollowThem = await Follow.findOne({ follower: me, following: withUser });
+        const theyFollowMe = await Follow.findOne({ follower: withUser, following: me });
+        if (!iFollowThem || !theyFollowMe) return res.redirect('/chat');
 
         const otherUser = await User.findOne({ username: withUser });
         const displayName = otherUser ? (otherUser.full_name || otherUser.username) : withUser;
@@ -640,6 +518,11 @@ router.post('/:withUser', async (req, res) => {
     try {
         const me = req.session.user;
         const withUser = req.params.withUser;
+
+        // Mutual follow check
+        const iFollowThem = await Follow.findOne({ follower: me, following: withUser });
+        const theyFollowMe = await Follow.findOne({ follower: withUser, following: me });
+        if (!iFollowThem || !theyFollowMe) return res.redirect('/chat');
         const chatId = getChatId(me, withUser);
 
         await Message.create({

@@ -88,6 +88,7 @@ app.use('/students', isAuthenticated, studentsRoutes);
 const icons = {
     home: `<svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>`,
     search: `<svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>`,
+    bell: `<svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>`,
     students: `<svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>`,
     plus: `<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>`,
     chat: `<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>`,
@@ -377,6 +378,7 @@ app.get('/', async (req, res) => {
 
     // ========== LOGGED-IN HOME WITH TABS ==========
     const me = req.session.user;
+    const homeUnreadCount = await Notification.countDocuments({ recipient: me, seen: false });
     const feedParam = req.query.feed === 'following' ? 'following' : 'foryou';
 
     let posts = [];
@@ -433,6 +435,10 @@ app.get('/', async (req, res) => {
             <header class="feed-header">
                 <h1 class="feed-title">Home</h1>
                 <a href="/search" class="header-icon" title="Search">${icons.search}</a>
+                <a href="/chat/notifications" class="header-icon header-icon-bell" title="Notifications">
+                    ${icons.bell}
+                    ${homeUnreadCount > 0 ? `<span class="header-badge">${homeUnreadCount}</span>` : ''}
+                </a>
                 <span id="home-students-banner"></span>
             </header>
 
