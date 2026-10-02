@@ -93,3 +93,26 @@ function toggleProfileMenuClose() {
 function closePostMenus() {
     document.querySelectorAll('.post-menu-dropdown').forEach(function(m) { m.classList.remove('active'); });
 }
+
+// ===== Theme toggle =====
+function eligetToggleTheme() {
+    var current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('eliget-theme', next); } catch(e) {}
+    if (next === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+    eligetUpdateThemeUI();
+}
+
+function eligetUpdateThemeUI() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var toggle = document.getElementById('themeToggle');
+    var status = document.getElementById('themeStatusText');
+    if (toggle) toggle.classList.toggle('on', isDark);
+    if (status) status.textContent = isDark ? 'Enabled' : 'Switch between light and dark';
+}
+
+document.addEventListener('DOMContentLoaded', eligetUpdateThemeUI);

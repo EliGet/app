@@ -7,6 +7,9 @@ const app = express();
 app.use((req, res, next) => {
     const _send = res.send.bind(res);
     res.send = function(body) {
+        if (typeof body === 'string' && body.includes('<head>') && !body.includes('eliget-theme-init')) {
+            body = body.replace('<head>', '<head><script id="eliget-theme-init">(function(){try{var t=localStorage.getItem("eliget-theme")||"light";if(t==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>');
+        }
         if (typeof body === 'string' && body.includes('</body>') && !body.includes('/love.js')) {
             body = body.replace('</body>', '<script src="/love.js"></script><script src="/follow.js"></script><script src="/report.js"></script></body>');
         }
@@ -1434,6 +1437,24 @@ app.get('/settings', isAuthenticated, async (req, res) => {
                 <h2 class="st-section-label">Blocked users</h2>
                 <div class="st-card">
                     ${blockedHtml}
+                </div>
+            </section>
+
+            <section class="st-section">
+                <h2 class="st-section-label">Appearance</h2>
+                <div class="st-card">
+                    <div class="st-row st-row-toggle" onclick="eligetToggleTheme()">
+                        <div class="st-row-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z" fill="currentColor"/></svg>
+                        </div>
+                        <div class="st-row-content">
+                            <div class="st-row-title">Dark mode</div>
+                            <div class="st-row-desc" id="themeStatusText">Switch between light and dark</div>
+                        </div>
+                        <div class="st-toggle" id="themeToggle">
+                            <div class="st-toggle-knob"></div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
