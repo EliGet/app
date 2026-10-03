@@ -1178,17 +1178,13 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
             if (badgesHtml) badgesHtml = `<div class="pp-badges">${badgesHtml}</div>`;
         }
 
+        // Message button only if mutual follow
         let actionBtn = '';
-        if (isFriend) {
-            actionBtn = `<a href="/chat/${targetUsername}" class="pp-action-btn primary">Message</a>`;
-        } else if (pendingRequest && pendingRequest.from === me) {
-            actionBtn = `<button class="pp-action-btn disabled" disabled>Requested</button>`;
-        } else if (pendingRequest && pendingRequest.to === me) {
-            actionBtn = `<a href="/chat/notifications" class="pp-action-btn primary">Respond</a>`;
-        } else {
-            actionBtn = `<form action="/chat/request/${targetUsername}" method="POST" style="margin:0; display:inline;">
-                <button type="submit" class="pp-action-btn primary">Add Friend</button>
-            </form>`;
+        if (isFollowing) {
+            const theyFollowMe = await Follow.findOne({ follower: targetUsername, following: me });
+            if (theyFollowMe) {
+                actionBtn = `<a href="/chat/${targetUsername}" class="pp-action-btn primary">Message</a>`;
+            }
         }
 
         let followBtn;
