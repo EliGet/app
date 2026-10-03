@@ -11,6 +11,10 @@ const Notification = require('../models/Notification');
 const Group = require('../models/Group');
 const GroupMessage = require('../models/GroupMessage');
 
+function escapeXmlSystem(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 function getChatId(user1, user2) {
     const users = [user1.toLowerCase(), user2.toLowerCase()].sort();
     return `${users[0]}_${users[1]}`;
@@ -412,6 +416,10 @@ router.get('/:withUser', async (req, res) => {
         } else {
             let lastDay = null;
             messages.forEach(m => {
+                if (m.from === 'system') {
+                    messagesHtml += '<div class="msg-system"><span>' + escapeXmlSystem(m.body) + '</span></div>';
+                    return;
+                }
                 const isMe = m.from === me;
                 const dLabel = (function(dt){
                     const now = new Date();

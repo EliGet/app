@@ -7571,3 +7571,27 @@ html { transition: background-color 0.2s ease; }
 [data-theme="dark"] .lp-brand {
     color: #f1f5f9 !important;
 }
+
+/* ===== System message style v1 ===== */
+.msg-system {
+    display: flex;
+    justify-content: center;
+    margin: 16px 8px;
+}
+.msg-system span {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+    border-radius: 999px;
+    text-align: center;
+    line-height: 1.4;
+    max-width: 90%;
+}
+[data-theme="dark"] .msg-system span {
+    background: #1e2b3f !important;
+    color: #94a3b8 !important;
+}

@@ -1595,6 +1595,23 @@ app.post('/follow/:username', isAuthenticated, async (req, res) => {
                 type: 'follow',
                 ref_id: ''
             });
+
+            // Check for mutual follow → send system message (only if no prior chat)
+            const reverseFollow = await Follow.findOne({ follower: target, following: me });
+            if (reverseFollow) {
+                const Message = require('./models/Message');
+                const users = [me.toLowerCase(), target.toLowerCase()].sort();
+                const chatId = users[0] + '_' + users[1];
+                const anyExisting = await Message.findOne({ chat_id: chatId });
+                if (!anyExisting) {
+                    await Message.create({
+                        chat_id: chatId,
+                        from: 'system',
+                        body: 'You are now friends. Say hi!',
+                        read: false
+                    });
+                }
+            }
         }
         const count = await Follow.countDocuments({ following: target });
         res.json({ ok: true, following: following, count: count });
