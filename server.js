@@ -7,10 +7,11 @@ const app = express();
 app.use((req, res, next) => {
     const _send = res.send.bind(res);
     res.send = function(body) {
-        if (typeof body === 'string' && body.includes('<head>') && !body.includes('eliget-theme-init')) {
+        const isWap = typeof body === 'string' && (body.indexOf('wapforum') !== -1 || body.indexOf('<?xml') === 0);
+        if (!isWap && typeof body === 'string' && body.includes('<head>') && !body.includes('eliget-theme-init')) {
             body = body.replace('<head>', '<head><script id="eliget-theme-init">(function(){try{var t=localStorage.getItem("eliget-theme")||"light";if(t==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();</script>');
         }
-        if (typeof body === 'string' && body.includes('</body>') && !body.includes('/love.js')) {
+        if (!isWap && typeof body === 'string' && body.includes('</body>') && !body.includes('/love.js')) {
             body = body.replace('</body>', '<script src="/love.js"></script><script src="/follow.js"></script><script src="/report.js"></script></body>');
         }
         return _send(body);

@@ -47,13 +47,13 @@ function wapPage(title, body, options = {}) {
         });
     }
 
-    // Only show "Back" if the caller explicitly requested it (not Home)
-    const backLink = backUrl
-        ? `<p><a href="${backUrl}">[ Back ]</a>  <a href="/wap${userParam}">[ Home ]</a></p>`
-        : '';
+    // Top nav bar: Back + Home (classic WAP style)
+    const topNav = backUrl
+        ? `<p><a href="${backUrl}">&lt;&lt; Back</a> | <a href="/wap${userParam}">Home</a></p>`
+        : '<p><b>EliGet</b></p>';
 
     const userLine = user
-        ? `<p><small>Signed in as <b>${escapeXml(user)}</b></small></p>`
+        ? `<p><small>You: <b>${escapeXml(user)}</b></small></p>`
         : '';
 
     return `<?xml version="1.0" encoding="UTF-8"?>
@@ -61,19 +61,17 @@ function wapPage(title, body, options = {}) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 ${autoRefresh}
 <title>${escapeXml(title)} - EliGet</title>
 </head>
 <body>
+${topNav}
 <h1>${escapeXml(title)}</h1>
 <hr/>
 ${processedBody}
 <hr/>
-${backLink}
 ${userLine}
-<p><small><b>EliGet</b><br/>Text-only network</small></p>
+<p><small>EliGet - Text-only network</small></p>
 </body>
 </html>`;
 }
@@ -85,28 +83,29 @@ router.get('/', async (req, res) => {
 
     let menu = '';
     if (isLoggedIn) {
-        // Count unread requests
         let notifBadge = '';
         try {
-            const FriendRequest = require('../models/FriendRequest');
-            const count = await FriendRequest.countDocuments({ to: username, status: 'pending' });
-            if (count > 0) notifBadge = ` (${count})`;
+            const Notification = require('../models/Notification');
+            const count = await Notification.countDocuments({ recipient: username, seen: false });
+            if (count > 0) notifBadge = ` (${count} new)`;
         } catch (e) {}
 
         menu = `
-            <p><b>1.</b> <a href="/wap/feed">Feed</a></p>
-            <p><b>2.</b> <a href="/wap/post">New Post</a></p>
-            <p><b>3.</b> <a href="/wap/chat">Chat</a></p>
-            <p><b>4.</b> <a href="/wap/notifications">Notifications${notifBadge}</a></p>
-            <p><b>5.</b> <a href="/wap/profile">Profile</a></p>
-            <p><b>6.</b> <a href="/wap/logout">Logout</a></p>
+            <p>1. <a href="/wap/feed">Feed</a></p>
+            <p>2. <a href="/wap/post">Write a post</a></p>
+            <p>3. <a href="/wap/chat">Messages</a></p>
+            <p>4. <a href="/wap/notifications">Notifications${notifBadge}</a></p>
+            <p>5. <a href="/wap/profile">Profile</a></p>
+            <p>6. <a href="/wap/logout">Logout</a></p>
         `;
     } else {
         menu = `
-            <p>Text-only network.<br/>No algorithms. No videos.<br/>Just pure thoughts.</p>
-            <p><b>1.</b> <a href="/wap/login">Login</a></p>
-            <p><b>2.</b> <a href="/wap/signup">Create Account</a></p>
-            <p><b>3.</b> <a href="/wap/feed">Browse Feed (read only)</a></p>
+            <p>Text-only network.<br/>
+            No algorithms. No videos.<br/>
+            Just pure thoughts.</p>
+            <p>1. <a href="/wap/login">Login</a></p>
+            <p>2. <a href="/wap/signup">Create Account</a></p>
+            <p>3. <a href="/wap/feed">Browse Feed</a></p>
         `;
     }
 
@@ -235,31 +234,39 @@ router.get('/feed', async (req, res) => {
 
         let html = '';
         if (posts.length === 0) {
-            html = '<p>No posts yet.</p>';
+            html = '<p>No posts yet.<br/><small>Be the first to write something.</small></p>';
         } else {
             for (let i = 0; i < posts.length; i++) {
                 const p = posts[i];
                 const author = await User.findOne({ username: p.author });
                 const displayName = author ? (author.full_name || author.username) : p.author;
 
+                // Time ago
+                const diff = Date.now() - new Date(p.created_at).getTime();
+                const min = Math.floor(diff / 60000);
+                let timeStr;
+                if (min < 1) timeStr = 'now';
+                else if (min < 60) timeStr = min + 'm';
+                else if (min < 1440) timeStr = Math.floor(min / 60) + 'h';
+                else timeStr = Math.floor(min / 1440) + 'd';
+
                 let body = p.body;
                 let readMore = '';
-                if (body.length > 120) {
-                    body = body.substring(0, 120) + '...';
-                    readMore = ` <a href="/wap/post/${p._id}">Read more</a>`;
+                if (body.length > 150) {
+                    body = body.substring(0, 150) + '...';
+                    readMore = ` <a href="/wap/post/${p._id}">more</a>`;
                 }
 
-                html += `<p><b>${escapeXml(displayName)}</b><br/>${escapeXml(body)}${readMore}</p>`;
+                html += `<p><b>${escapeXml(displayName)}</b> <small>· ${timeStr}</small><br/>${escapeXml(body)}${readMore}</p>`;
             }
 
-            // Pagination
             html += '<hr/>';
             if (page > 1) {
-                html += `<a href="/wap/feed?page=${page - 1}">[ Previous ]</a>  `;
+                html += `<a href="/wap/feed?page=${page - 1}">&lt;&lt; Newer</a> | `;
             }
             html += `<small>Page ${page}/${totalPages}</small>`;
             if (page < totalPages) {
-                html += `  <a href="/wap/feed?page=${page + 1}">[ Next ]</a>`;
+                html += ` | <a href="/wap/feed?page=${page + 1}">Older &gt;&gt;</a>`;
             }
         }
 
@@ -280,10 +287,20 @@ router.get('/post/:id', async (req, res) => {
         const author = await User.findOne({ username: post.author });
         const displayName = author ? (author.full_name || author.username) : post.author;
 
+        const diff = Date.now() - new Date(post.created_at).getTime();
+        const min = Math.floor(diff / 60000);
+        let timeStr;
+        if (min < 1) timeStr = 'just now';
+        else if (min < 60) timeStr = min + 'm ago';
+        else if (min < 1440) timeStr = Math.floor(min / 60) + 'h ago';
+        else if (min < 10080) timeStr = Math.floor(min / 1440) + 'd ago';
+        else timeStr = new Date(post.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
         const html = `
-            <p><b>${escapeXml(displayName)}</b></p>
+            <p><b>${escapeXml(displayName)}</b><br/>
+            <small>${timeStr}</small></p>
             <hr/>
-            <p>${escapeXml(post.body)}</p>
+            <p>${escapeXml(post.body).replace(/\n/g, '<br/>')}</p>
         `;
 
         res.send(wapPage('Post', html, { back: '/wap/feed' , user: req.session.user }));
@@ -296,10 +313,10 @@ router.get('/post/:id', async (req, res) => {
 router.get('/post', (req, res) => {
     if (!req.session.user) return res.redirect('/wap/login');
     const body = `
+        <p><small>Max 300 characters.</small></p>
         <form action="/wap/post" method="POST">
-            <p>Your thoughts (max 300):<br/>
-            <textarea name="body" rows="5" cols="20" maxlength="300"></textarea></p>
-            <p><input type="submit" value="Post"/></p>
+            <p><textarea name="body" rows="6" cols="20" maxlength="300"></textarea></p>
+            <p><input type="submit" value="Publish"/></p>
         </form>
     `;
     res.send(wapPage('New Post', body, { back: '/wap' , user: req.session.user }));
@@ -321,115 +338,135 @@ router.post('/post', async (req, res) => {
     }
 });
 
-// ===== CHAT LIST (with last message preview) =====
+// ===== CHAT LIST (mutual follows) =====
 router.get('/chat', async (req, res) => {
     if (!req.session.user) return res.redirect('/wap/login');
     try {
         const me = req.session.user;
-        const FriendRequest = require('../models/FriendRequest');
+        const Follow = require('../models/Follow');
         const Message = require('../models/Message');
 
-        const accepted = await FriendRequest.find({
-            status: 'accepted',
-            $or: [{ from: me }, { to: me }]
-        });
+        // Get mutual follows
+        const iFollow = await Follow.find({ follower: me }).select('following');
+        const myFollowing = iFollow.map(f => f.following);
+        let mutualUsers = [];
+        if (myFollowing.length > 0) {
+            const mutual = await Follow.find({
+                following: me,
+                follower: { $in: myFollowing }
+            }).select('follower');
+            mutualUsers = mutual.map(f => f.follower);
+        }
 
         let html = '';
-        if (accepted.length === 0) {
-            html = '<p>No chats yet.</p>';
+        if (mutualUsers.length === 0) {
+            html = '<p>No conversations yet.<br/><small>Follow someone mutual to unlock chat.</small></p>';
+            html += '<hr/><p><a href="/wap/add-friends">Find people to follow</a></p>';
         } else {
-            for (let i = 0; i < accepted.length; i++) {
-                const r = accepted[i];
-                const other = r.from === me ? r.to : r.from;
-
-                function getChatId(u1, u2) {
-                    const users = [u1.toLowerCase(), u2.toLowerCase()].sort();
-                    return `${users[0]}_${users[1]}`;
-                }
-
-                const lastMsg = await Message.findOne({ chat_id: getChatId(me, other) }).sort({ created_at: -1 });
-                const unread = await Message.countDocuments({ chat_id: getChatId(me, other), from: other, read: false });
+            for (const other of mutualUsers) {
+                const users = [me.toLowerCase(), other.toLowerCase()].sort();
+                const chatId = users[0] + '_' + users[1];
+                const lastMsg = await Message.findOne({ chat_id: chatId }).sort({ created_at: -1 });
+                const unread = await Message.countDocuments({ chat_id: chatId, from: other, read: false });
 
                 let preview = 'No messages yet';
                 if (lastMsg) {
-                    preview = lastMsg.body.length > 30 ? lastMsg.body.substring(0, 30) + '...' : lastMsg.body;
+                    preview = lastMsg.body.length > 40 ? lastMsg.body.substring(0, 40) + '...' : lastMsg.body;
                 }
 
-                const newBadge = unread > 0 ? ' <b>*NEW*</b>' : '';
-                html += `<p>${i + 1}. <a href="/wap/chat/${other}"><b>${escapeXml(other)}</b></a>${newBadge}<br/><small>${escapeXml(preview)}</small></p>`;
+                const otherUser = await User.findOne({ username: other });
+                const dn = otherUser ? (otherUser.full_name || otherUser.username) : other;
+
+                const badge = unread > 0 ? ' <b>(' + unread + ' new)</b>' : '';
+                html += '<p><a href="/wap/chat/' + encodeURIComponent(other) + '"><b>' + escapeXml(dn) + '</b></a>' + badge;
+                html += '<br/><small>' + escapeXml(preview) + '</small></p>';
             }
+            html += '<hr/><p><a href="/wap/add-friends">Find more people</a></p>';
         }
 
-        html += `<p><a href="/wap/add-friends">Add Friends</a></p>`;
-
-        res.send(wapPage('Chats', html, { back: '/wap' , user: req.session.user }));
+        res.send(wapPage('Chats', html, { back: '/wap', user: req.session.user }));
     } catch (err) {
         console.error('Chat list error:', err);
-        res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap">Home</a></p>`));
+        res.send(wapPage('Error', '<p>Something went wrong.</p><p><a href="/wap">Home</a></p>'));
     }
 });
 
-// ===== ADD FRIENDS =====
+// ===== FIND PEOPLE (Follow-based) =====
 router.get('/add-friends', async (req, res) => {
     if (!req.session.user) return res.redirect('/wap/login');
     try {
         const me = req.session.user;
-        const FriendRequest = require('../models/FriendRequest');
+        const Follow = require('../models/Follow');
+        const Block = require('../models/Block');
+
         const allUsers = await User.find({ username: { $ne: me } }).limit(20);
+
+        // My blocks
+        const myBlocks = await Block.find({ blocker: me }).select('blocked');
+        const theirBlocks = await Block.find({ blocked: me }).select('blocker');
+        const blockedSet = new Set([
+            ...myBlocks.map(b => b.blocked),
+            ...theirBlocks.map(b => b.blocker)
+        ]);
 
         let html = '';
         let hasAny = false;
 
         for (const u of allUsers) {
-            const existing = await FriendRequest.findOne({
-                $or: [
-                    { from: me, to: u.username },
-                    { from: u.username, to: me }
-                ]
-            });
+            if (blockedSet.has(u.username)) continue;
 
-            if (existing && existing.status === 'accepted') continue;
+            const iFollow = await Follow.findOne({ follower: me, following: u.username });
+            const theyFollow = await Follow.findOne({ follower: u.username, following: me });
 
             hasAny = true;
+            const dn = u.full_name || u.username;
 
-            if (existing && existing.status === 'pending' && existing.from === me) {
-                html += `<p>${escapeXml(u.full_name)} - <b>Requested</b></p>`;
-            } else if (existing && existing.status === 'pending' && existing.to === me) {
-                html += `<p>${escapeXml(u.full_name)} - <a href="/wap/notifications">Respond</a></p>`;
+            if (iFollow && theyFollow) {
+                html += '<p><b>' + escapeXml(dn) + '</b> <small>@' + escapeXml(u.username) + '</small><br/>';
+                html += '<a href="/wap/chat/' + encodeURIComponent(u.username) + '">Message</a> · Mutual</p>';
+            } else if (iFollow) {
+                html += '<p><b>' + escapeXml(dn) + '</b> <small>@' + escapeXml(u.username) + '</small><br/>';
+                html += '<small>Following</small></p>';
             } else {
-                html += `<p>${escapeXml(u.full_name)} (@${escapeXml(u.username)})<br/><a href="/wap/request/${u.username}">Send Request</a></p>`;
+                html += '<p><b>' + escapeXml(dn) + '</b> <small>@' + escapeXml(u.username) + '</small><br/>';
+                html += '<a href="/wap/follow/' + encodeURIComponent(u.username) + '">Follow</a></p>';
             }
         }
 
         if (!hasAny) {
-            html = '<p>No other users available right now.</p>';
+            html = '<p>No one to show yet.<br/><small>Check back later.</small></p>';
         }
 
-        html += `<p><a href="/wap/chat">Back to Chats</a></p>`;
-        res.send(wapPage('Add Friends', html, { back: '/wap/chat' , user: req.session.user }));
+        html += '<hr/><p><a href="/wap/chat">Back to Chats</a></p>';
+        res.send(wapPage('Find people', html, { back: '/wap/chat', user: req.session.user }));
     } catch (err) {
-        console.error('Add friends error:', err);
-        res.send(wapPage('Error', `<p>Something went wrong.</p><p><a href="/wap">Home</a></p>`));
+        console.error('Find people error:', err);
+        res.send(wapPage('Error', '<p>Something went wrong.</p><p><a href="/wap">Home</a></p>'));
     }
 });
 
-// ===== SEND FRIEND REQUEST =====
-router.get('/request/:target', async (req, res) => {
+// ===== FOLLOW ACTION =====
+router.get('/follow/:target', async (req, res) => {
     if (!req.session.user) return res.redirect('/wap/login');
     try {
-        const FriendRequest = require('../models/FriendRequest');
+        const Follow = require('../models/Follow');
+        const Notification = require('../models/Notification');
         const me = req.session.user;
         const target = req.params.target;
 
-        const existing = await FriendRequest.findOne({
-            $or: [
-                { from: me, to: target },
-                { from: target, to: me }
-            ]
-        });
+        if (target === me) return res.redirect('/wap/add-friends');
 
+        const existing = await Follow.findOne({ follower: me, following: target });
         if (!existing) {
-            await FriendRequest.create({ from: me, to: target, status: 'pending' });
+            await Follow.create({ follower: me, following: target });
+            try {
+                await Notification.create({
+                    recipient: target,
+                    actor: me,
+                    type: 'follow',
+                    ref_id: ''
+                });
+            } catch (e) {}
         }
         res.redirect('/wap/add-friends');
     } catch (err) {
@@ -442,38 +479,36 @@ router.get('/notifications', async (req, res) => {
     if (!req.session.user) return res.redirect('/wap/login');
     try {
         const me = req.session.user;
-        const FriendRequest = require('../models/FriendRequest');
-        const pending = await FriendRequest.find({ to: me, status: 'pending' });
+        const Notification = require('../models/Notification');
+
+        const notifs = await Notification.find({ recipient: me })
+            .sort({ created_at: -1 })
+            .limit(30);
 
         let html = '';
-        if (pending.length === 0) {
-            html = '<p>No new notifications.</p>';
+        if (notifs.length === 0) {
+            html = '<p>All caught up.<br/><small>No new notifications.</small></p>';
         } else {
-            for (const r of pending) {
-                html += `<p><b>${escapeXml(r.from)}</b> wants to chat.</p>
-                         <p><a href="/wap/accept/${r._id}">[Accept]</a></p>`;
+            for (const n of notifs) {
+                let text = '';
+                if (n.type === 'follow') text = 'started following you';
+                else if (n.type === 'mention') text = 'mentioned you';
+                else if (n.type === 'friend_accepted') text = 'followed you back';
+                html += '<p><b>' + escapeXml(n.actor) + '</b> ' + text + '</p>';
             }
+            // Delete after view
+            await Notification.deleteMany({
+                recipient: me,
+                type: { $in: ['follow', 'friend_accepted'] }
+            });
         }
 
-        res.send(wapPage('Notifications', html, { back: '/wap' , user: req.session.user }));
+        res.send(wapPage('Notifications', html, { back: '/wap', user: req.session.user }));
     } catch (err) {
         res.send(wapPage('Error', '<p>Error loading notifications.</p><p><a href="/wap">Home</a></p>'));
     }
 });
 
-// ===== ACCEPT REQUEST =====
-router.get('/accept/:id', async (req, res) => {
-    if (!req.session.user) return res.redirect('/wap/login');
-    try {
-        const FriendRequest = require('../models/FriendRequest');
-        await FriendRequest.updateOne({ _id: req.params.id }, { status: 'accepted' });
-        res.redirect('/wap/chat');
-    } catch (err) {
-        res.redirect('/wap');
-    }
-});
-
-// ===== CHAT ROOM (with auto-refresh + quick reply) =====
 router.get('/chat/:withUser', async (req, res) => {
     if (!req.session.user) return res.redirect('/wap/login');
     try {
@@ -581,12 +616,12 @@ router.get('/profile', async (req, res) => {
 
         let postsHtml = '';
         if (posts.length === 0) {
-            postsHtml = '<p>You have no posts yet.</p>';
+            postsHtml = '<p><small>No posts yet.</small></p>';
         } else {
-            posts.forEach((p, i) => {
+            posts.forEach((p) => {
                 let body = p.body;
-                if (body.length > 80) body = body.substring(0, 80) + '...';
-                postsHtml += `<p>${i + 1}. ${escapeXml(body)}</p>`;
+                if (body.length > 100) body = body.substring(0, 100) + '...';
+                postsHtml += `<p>${escapeXml(body)}</p>`;
             });
         }
 
