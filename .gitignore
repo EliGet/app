@@ -1,4 +1,24 @@
 node_modules/
 .env
-*.bak*
+*.bak
 *.bak_*
+*.tmp
+*.log
+
+# One-off helper scripts (prevent committing)
+add_*.js
+fix_*.js
+fix2_*.js
+update_*.js
+inject_*.js
+new_*.js
+polish_*.js
+remove_*.js
+replace_*.js
+debug_*.js
+modify_*.js
+_patch_*.js
+convert_*.js
+stage*.js
+wap_stage*.js
+test-*.js
