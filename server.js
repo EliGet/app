@@ -1,7 +1,55 @@
 const connectDB = require('./db');
 const express = require('express');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const session = require('express-session');
 const app = express();
+
+// Health check for monitoring
+app.get('/health', (req, res) => {
+    res.json({ ok: true, ts: Date.now() });
+});
+
+// Security headers
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
+
+// Rate limiters
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many attempts. Please try again in 15 minutes.'
+});
+
+const writeLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many requests. Please slow down.'
+});
+
+const searchLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+app.use('/auth/login', authLimiter);
+app.use('/auth/signup', authLimiter);
+app.use('/auth/recover', authLimiter);
+app.use('/post/create', writeLimiter);
+app.use('/report', writeLimiter);
+app.use('/search', searchLimiter);
+
+// Trust proxy for HTTPS termination (Render, etc.)
+app.set('trust proxy', 1);
 
 // Inject love.js into every HTML response
 app.use((req, res, next) => {
@@ -48,13 +96,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
-    secret: 'eliget-secret-key-123',
+    secret: process.env.SESSION_SECRET || 'dev-only-change-in-production-' + Math.random().toString(36),
     resave: false,
     saveUninitialized: false,
     cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000,
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === 'production' && process.env.DISABLE_HTTPS !== '1',
         sameSite: 'lax'
     }
 }));
@@ -1996,7 +2044,17 @@ app.use((err, req, res, next) => {
 
 // ===== START SERVER =====
 connectDB().then(() => {
-    app.listen(PORT, '0.0.0.0', () => { console.log('EliGet সার্ভার চালু হয়েছে: http://localhost:' + PORT); });
+    app.listen(PORT, '0.0.0.0', () => { console.log('EliGet সার্ভার চালু হয়েছে: http://localhost:' + PORT);
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down...');
+    process.exit(0);
+});
+process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down...');
+    process.exit(0);
+}); });
 });
 
 // ===== SPLASH SCREEN =====
