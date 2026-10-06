@@ -157,7 +157,7 @@ router.get('/', async (req, res) => {
         }
 
         if (!hasChats) {
-            let emptyMsg = 'No chats yet.';
+            let emptyMsg = 'No conversations yet.';
             if (filter === 'groups') emptyMsg = 'No group chats found.';
             if (filter === 'unread') emptyMsg = 'No unread messages. All caught up!';
             chatItemsHtml = `<p style="text-align:center; color:#a0aec0; padding: 20px;">${emptyMsg}</p>`;
@@ -412,7 +412,11 @@ router.get('/:withUser', async (req, res) => {
 
         let messagesHtml = '';
         if (messages.length === 0) {
-            messagesHtml = '<p style="text-align:center; color:#a0aec0; padding: 20px;">No messages yet. Say hi!</p>';
+            messagesHtml = `<div class="empty-state empty-compact">
+                <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                <h3>No messages yet</h3>
+                <p>Say hi to start the conversation.</p>
+            </div>`;
         } else {
             let lastDay = null;
             messages.forEach(m => {

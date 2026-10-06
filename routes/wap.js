@@ -530,7 +530,7 @@ router.get('/chat/:withUser', async (req, res) => {
 
         let html = '';
         if (messages.length === 0) {
-            html = '<p>No messages yet. Say hi!</p>';
+            html = '<p>No messages yet. Say hi.</p>';
         } else {
             messages.forEach(m => {
                 const sender = m.from === me ? 'You' : m.from;

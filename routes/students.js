@@ -153,7 +153,7 @@ router.get('/', async (req, res) => {
 
                 <form action="/students" method="GET" class="sp-search-form">
                     ${filter !== 'all' ? `<input type="hidden" name="filter" value="${filter}">` : ''}
-                    <input type="text" name="q" value="${escapeHtml(q)}" placeholder="Search title or text..." class="sp-search-input">
+                    <input type="text" name="q" value="${escapeHtml(q)}" placeholder="Search students..." class="sp-search-input">
                 </form>
 
                 <div class="sp-chips">${filterChips}</div>
@@ -248,7 +248,7 @@ router.get('/new', async (req, res) => {
                     </div>
                 </div>
 
-                <button type="submit" class="btn-full">Publish</button>
+                <button type="submit" class="btn-full">Post</button>
             </form>
         </div>
         ${getBottomNav('students')}

@@ -547,7 +547,11 @@ app.get('/feed', async (req, res) => {
     html += '<header class="feed-header"><h1 class="feed-title">Feed</h1></header>';
     
     if (posts.length === 0) {
-        html += '<p style="text-align:center; color:#a0aec0; padding:20px;">No posts yet.</p>';
+        html += `<div class="empty-state">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h10v2H7zm0 4h7v2H7z"/></svg>
+            <h3>Nothing here yet</h3>
+            <p>Be the first to share a thought.</p>
+        </div>`;
     } else {
         const feedFollowSet = await getFollowSet(req.session.user || null);
         for (const p of posts) {
@@ -1204,7 +1208,11 @@ app.get('/profile/:username', isAuthenticated, async (req, res) => {
 
         let postsHtml = '';
         if (theirPosts.length === 0) {
-            postsHtml = '<div class="empty-state"><p>No posts yet.</p></div>';
+            postsHtml = `<div class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h10v2H7zm0 4h7v2H7z"/></svg>
+                <h3>No posts yet</h3>
+                <p>This user has not shared anything.</p>
+            </div>`;
         } else {
             const otherFollowSet = await getFollowSet(me);
             for (const p of theirPosts) {
